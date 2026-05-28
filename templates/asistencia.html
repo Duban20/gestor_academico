@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Asistencia P{{ periodo_actual }} – {{ materia.nombre }}{% endblock %}
+{% block sidebar_extra %}{% with modulo_activo="asistencia" %}{% include "includes/sidebar_materia.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <div class="breadcrumb">
+      <a href="{% url 'grados' %}">Inicio</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_grado' materia.grado.id %}">{{ materia.grado.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_materia' materia.id %}?periodo={{ periodo_actual }}">{{ materia.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <span>Asistencia</span>
+    </div>
+    <h1 class="page-title">Asistencia — {{ materia.nombre }}</h1>
+  </div>
+  <div class="topbar-actions">
+    <span class="periodo-badge">Periodo {{ periodo_actual }}</span>
+    <button class="module-tab active" id="tab-reg" onclick="cambiarTab('registro')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>
+      Registrar
+    </button>
+    <button class="module-tab" id="tab-hist" onclick="cambiarTab('historial')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/></svg>
+      Historial
+    </button>
+  </div>
+</div>
+
+<!-- Panel Registro -->
+<div id="panel-registro">
+  <div class="card" style="max-width:640px;">
+    <div class="card-header">
+      <h3>Registrar clase</h3>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="date" id="asist-fecha" class="form-control" style="width:auto;">
+        <button class="btn btn-outline btn-sm" onclick="cargarAsistencia()">Cargar</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table class="asist-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:9px 14px;">Estudiante</th>
+            <th style="padding:9px 14px;">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="asist-tbody">
+          {% for e in estudiantes %}
+          <tr>
+            <td style="padding:8px 14px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <!-- Avatar clickeable = lightbox -->
+                <div class="avatar"
+                  style="width:30px;height:30px;font-size:10px;"
+                  onclick="abrirLightbox({{ e.id }},'{{ e.nombre|escapejs }}','{% if e.foto %}{{ e.foto.url }}{% endif %}','{{ csrf_token }}')"
+                  title="Ver foto de {{ e.nombre }}"
+                  data-est-id="{{ e.id }}">
+                  {% if e.foto %}<img src="{{ e.foto.url }}" alt="">{% else %}{{ e.iniciales }}{% endif %}
+                </div>
+                <span style="font-weight:500;font-size:12.5px;">{{ e.nombre }}</span>
+              </div>
+            </td>
+            <td style="padding:7px 14px;">
+              <div class="asist-radios">
+                <input class="asist-radio" type="radio" name="est_{{ e.id }}" id="P_{{ e.id }}" value="P" checked data-est-id="{{ e.id }}">
+                <label class="asist-radio-label" for="P_{{ e.id }}">✓ Presente</label>
+                <input class="asist-radio" type="radio" name="est_{{ e.id }}" id="A_{{ e.id }}" value="A" data-est-id="{{ e.id }}">
+                <label class="asist-radio-label" for="A_{{ e.id }}">✕ Ausente</label>
+                <input class="asist-radio" type="radio" name="est_{{ e.id }}" id="E_{{ e.id }}" value="E" data-est-id="{{ e.id }}">
+                <label class="asist-radio-label" for="E_{{ e.id }}">~ Excusa</label>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+      <button class="btn btn-success" onclick="guardarAsistencia()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Guardar asistencia
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Panel Historial -->
+<div id="panel-historial" style="display:none;">
+  <div class="card">
+    <div class="card-header"><h3>Historial — Periodo {{ periodo_actual }}</h3></div>
+    <div class="card-body" id="historial-content">
+      <div style="text-align:center;padding:40px;color:var(--text-muted);">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MATERIA_ID  = parseInt("{{ materia.id }}", 10);
+const PERIODO     = {{ periodo_actual }};
+const CSRF_TOKEN  = '{{ csrf_token }}';
+
+function fechaHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+document.getElementById('asist-fecha').value = fechaHoy();
+
+function cambiarTab(tab){
+  document.getElementById('panel-registro').style.display  = tab==='registro'  ? '' : 'none';
+  document.getElementById('panel-historial').style.display = tab==='historial' ? '' : 'none';
+  document.getElementById('tab-reg').className  = 'module-tab'+(tab==='registro'?' active':'');
+  document.getElementById('tab-hist').className = 'module-tab'+(tab==='historial'?' active':'');
+  if(tab==='historial') cargarHistorial();
+}
+
+function cargarAsistencia(){
+  const fecha=document.getElementById('asist-fecha').value;
+  if(!fecha) return;
+  fetch(`/materia/${MATERIA_ID}/asistencia/api/?periodo=${PERIODO}&fecha=${fecha}`)
+    .then(r=>r.json()).then(data=>{
+      data.estudiantes.forEach(e=>{
+        ['P','A','E'].forEach(v=>{const r=document.getElementById(`${v}_${e.id}`);if(r)r.checked=(e.estado===v);});
+      });
+      showToast('Cargado: '+fecha);
+    }).catch(()=>showToast('Error',false));
+}
+
+function guardarAsistencia(){
+  const fecha=document.getElementById('asist-fecha').value;
+  if(!fecha){showToast('Selecciona fecha',false);return;}
+  const fd=new FormData();
+  fd.append('fecha',fecha); fd.append('csrfmiddlewaretoken',CSRF_TOKEN);
+  document.querySelectorAll('#asist-tbody tr').forEach(tr=>{
+    tr.querySelectorAll('input[type=radio]').forEach(r=>{if(r.checked)fd.append(`estado_${r.dataset.estId}`,r.value);});
+  });
+  fetch(`/materia/${MATERIA_ID}/asistencia/api/?periodo=${PERIODO}`,{method:'POST',body:fd})
+    .then(r=>r.json()).then(d=>{if(d.ok)showToast('✓ Guardado');else showToast('Error',false);})
+    .catch(()=>showToast('Error',false));
+}
+
+function cargarHistorial(){
+  fetch(`/materia/${MATERIA_ID}/asistencia/historial/?periodo=${PERIODO}`)
+    .then(r=>r.json()).then(renderHistorial)
+    .catch(()=>{document.getElementById('historial-content').innerHTML='<p style="color:var(--nota-bajo-text)">Error.</p>';});
+}
+
+function renderHistorial({estudiantes,fechas,tabla}){
+  if(!fechas.length){
+    document.getElementById('historial-content').innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><p>Sin asistencias registradas en este periodo.</p></div>';
+    return;
+  }
+  const totales={};
+  estudiantes.forEach(e=>{totales[e.id]={P:0,A:0,E:0};});
+  fechas.forEach(f=>{estudiantes.forEach(e=>{const s=tabla[f]?.[e.id];if(s)totales[e.id][s]++;});});
+
+  let html='<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:12px;width:100%;"><thead><tr>';
+  html+='<th style="padding:8px 12px;border:1px solid var(--border);text-align:left;min-width:150px;background:#f8f9fd;">Estudiante</th>';
+  fechas.forEach(f=>{
+    const d=new Date(f+'T00:00:00');
+    html+=`<th style="padding:8px 8px;border:1px solid var(--border);white-space:nowrap;background:#f8f9fd;text-align:center;" title="${f}">${d.toLocaleDateString('es',{day:'2-digit',month:'2-digit'})}</th>`;
+  });
+  html+='<th style="padding:8px 8px;border:1px solid var(--border);background:#f8f9fd;color:#15803d;text-align:center;">P</th>';
+  html+='<th style="padding:8px 8px;border:1px solid var(--border);background:#f8f9fd;color:#b91c1c;text-align:center;">A</th>';
+  html+='<th style="padding:8px 8px;border:1px solid var(--border);background:#f8f9fd;color:#b45309;text-align:center;">E</th>';
+  html+='</tr></thead><tbody>';
+
+  estudiantes.forEach(e=>{
+    html+=`<tr><td style="padding:7px 12px;border:1px solid var(--border);font-weight:500;">${e.nombre}</td>`;
+    fechas.forEach(f=>{
+      const s=tabla[f]?.[e.id];
+      html+=`<td style="padding:7px 8px;border:1px solid var(--border);text-align:center;">`;
+      html+=s?`<span class="hist-pill hist-${s}">${s==='P'?'✓':s==='A'?'✕':'~'}</span>`:`<span style="color:#d1d5db;">·</span>`;
+      html+=`</td>`;
+    });
+    html+=`<td style="padding:7px 8px;border:1px solid var(--border);text-align:center;font-weight:700;color:#15803d;">${totales[e.id].P}</td>`;
+    html+=`<td style="padding:7px 8px;border:1px solid var(--border);text-align:center;font-weight:700;color:#b91c1c;">${totales[e.id].A}</td>`;
+    html+=`<td style="padding:7px 8px;border:1px solid var(--border);text-align:center;font-weight:700;color:#b45309;">${totales[e.id].E}</td>`;
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  html+=`<p style="font-size:11px;color:var(--text-muted);margin-top:10px;">${fechas.length} clase(s) registrada(s) en Periodo ${PERIODO}.</p>`;
+  document.getElementById('historial-content').innerHTML=html;
+}
+</script>
+{% endblock %}

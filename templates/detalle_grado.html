@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% block title %}{{ grado.nombre }}{% endblock %}
+{% block nav_grados %}active{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+  <div>
+    <div class="breadcrumb">
+      <a href="{% url 'grados' %}">Grados</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ grado.nombre }}</span>
+    </div>
+    <h1 class="page-title">{{ grado.nombre }}</h1>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+
+  <!-- ── Materias ── -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:16px;font-weight:700;color:var(--text);">Materias</h2>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">{{ materias.count }} materia{{ materias.count|pluralize:"s" }} disponible{{ materias.count|pluralize:"s" }}</p>
+      </div>
+    </div>
+
+    <div class="materias-grid">
+      {% for m in materias %}
+      <a href="{% url 'detalle_materia' m.id %}{% if request.GET.periodo %}?periodo={{ request.GET.periodo }}{% endif %}" class="materia-card-new mc-pos-{{ forloop.counter0|divisibleby:1 }} mc-idx-{{ forloop.counter }}">
+
+        <div class="mc-header">
+          <!-- Iniciales con fondo de color -->
+          <div class="mc-icon">
+            <span class="mc-iniciales">{% with words=m.nombre.split %}{% if words|length >= 2 %}{{ words.0|slice:":1" }}{{ words.1|slice:":1" }}{% else %}{{ m.nombre|slice:":2" }}{% endif %}{% endwith %}</span>
+          </div>
+          <div class="mc-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </div>
+        </div>
+
+        <div class="mc-nombre">{{ m.nombre }}</div>
+
+        <div class="mc-modules">
+          <span class="mc-mod">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
+            Notas
+          </span>
+          <span class="mc-mod">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Asistencia
+          </span>
+          <span class="mc-mod">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+            Comportamiento
+          </span>
+          <span class="mc-mod">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75m-6 3.75h12.75A2.25 2.25 0 0021 18.75V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0H8.25A2.25 2.25 0 006 4.5v15"/></svg>
+            Actividades
+          </span>
+        </div>
+
+      </a>
+      {% empty %}
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-state-icon">📚</div>
+        <p>Sin materias registradas para este grado.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Estudiantes ── -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:16px;font-weight:700;color:var(--text);">Estudiantes</h2>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">{{ estudiantes.count }} en este grado</p>
+      </div>
+    </div>
+
+    <div class="card">
+      {% for e in estudiantes %}
+      <div class="est-row {% if not forloop.last %}est-row-border{% endif %}">
+        <div class="avatar" style="cursor:default;width:32px;height:32px;font-size:11px;flex-shrink:0;">
+          {% if e.foto %}<img src="{{ e.foto.url }}" alt="">{% else %}{{ e.iniciales }}{% endif %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ e.nombre }}</div>
+          {% if e.codigo %}<div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">{{ e.codigo }}</div>{% endif %}
+        </div>
+        <div style="font-size:11px;color:#c4c9d8;font-family:var(--font-mono);flex-shrink:0;">{{ forloop.counter }}</div>
+      </div>
+      {% empty %}
+      <div style="padding:28px 16px;text-align:center;color:var(--text-muted);font-size:13px;">Sin estudiantes registrados.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* ── Paleta 6 colores para iconos ── */
+:root {
+  --mc0: #4f6ef7; --mc0-bg: #eef1ff; --mc0-bg2: #e0e6ff;
+  --mc1: #7c3aed; --mc1-bg: #f3eeff; --mc1-bg2: #ede0ff;
+  --mc2: #0891b2; --mc2-bg: #e0f7fa; --mc2-bg2: #b3eaf5;
+  --mc3: #15803d; --mc3-bg: #f0fdf4; --mc3-bg2: #bbf7d0;
+  --mc4: #b45309; --mc4-bg: #fffbeb; --mc4-bg2: #fde68a;
+  --mc5: #be185d; --mc5-bg: #fdf2f8; --mc5-bg2: #fbcfe8;
+}
+
+/* ── Grid de materias ── */
+.materias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+/* ── Tarjeta materia ── */
+.materia-card-new {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+  position: relative;
+  overflow: hidden;
+}
+
+.materia-card-new::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity .18s;
+}
+
+.materia-card-new:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px rgba(0,0,0,.10);
+}
+.materia-card-new:hover::before { opacity: 1; }
+.materia-card-new:hover .mc-arrow { color: #fff; }
+
+/* Color por posición nth-child */
+.materia-card-new:nth-child(6n+1) { border-color: #dde3fd; }
+.materia-card-new:nth-child(6n+1)::before { background: var(--mc0); }
+.materia-card-new:nth-child(6n+1) .mc-icon { background: var(--mc0-bg); }
+.materia-card-new:nth-child(6n+1) .mc-iniciales { color: var(--mc0); }
+.materia-card-new:nth-child(6n+1):hover { border-color: #c0ccfa; }
+.materia-card-new:nth-child(6n+1):hover .mc-arrow { background: var(--mc0); }
+
+.materia-card-new:nth-child(6n+2) { border-color: #e8deff; }
+.materia-card-new:nth-child(6n+2)::before { background: var(--mc1); }
+.materia-card-new:nth-child(6n+2) .mc-icon { background: var(--mc1-bg); }
+.materia-card-new:nth-child(6n+2) .mc-iniciales { color: var(--mc1); }
+.materia-card-new:nth-child(6n+2):hover { border-color: #d8c4ff; }
+.materia-card-new:nth-child(6n+2):hover .mc-arrow { background: var(--mc1); }
+
+.materia-card-new:nth-child(6n+3) { border-color: #b3e8f5; }
+.materia-card-new:nth-child(6n+3)::before { background: var(--mc2); }
+.materia-card-new:nth-child(6n+3) .mc-icon { background: var(--mc2-bg); }
+.materia-card-new:nth-child(6n+3) .mc-iniciales { color: var(--mc2); }
+.materia-card-new:nth-child(6n+3):hover { border-color: #7dd8ef; }
+.materia-card-new:nth-child(6n+3):hover .mc-arrow { background: var(--mc2); }
+
+.materia-card-new:nth-child(6n+4) { border-color: #bbf7d0; }
+.materia-card-new:nth-child(6n+4)::before { background: var(--mc3); }
+.materia-card-new:nth-child(6n+4) .mc-icon { background: var(--mc3-bg); }
+.materia-card-new:nth-child(6n+4) .mc-iniciales { color: var(--mc3); }
+.materia-card-new:nth-child(6n+4):hover { border-color: #86efac; }
+.materia-card-new:nth-child(6n+4):hover .mc-arrow { background: var(--mc3); }
+
+.materia-card-new:nth-child(6n+5) { border-color: #fde68a; }
+.materia-card-new:nth-child(6n+5)::before { background: var(--mc4); }
+.materia-card-new:nth-child(6n+5) .mc-icon { background: var(--mc4-bg); }
+.materia-card-new:nth-child(6n+5) .mc-iniciales { color: var(--mc4); }
+.materia-card-new:nth-child(6n+5):hover { border-color: #fbbf24; }
+.materia-card-new:nth-child(6n+5):hover .mc-arrow { background: var(--mc4); }
+
+.materia-card-new:nth-child(6n+6) { border-color: #fbcfe8; }
+.materia-card-new:nth-child(6n+6)::before { background: var(--mc5); }
+.materia-card-new:nth-child(6n+6) .mc-icon { background: var(--mc5-bg); }
+.materia-card-new:nth-child(6n+6) .mc-iniciales { color: var(--mc5); }
+.materia-card-new:nth-child(6n+6):hover { border-color: #f9a8d4; }
+.materia-card-new:nth-child(6n+6):hover .mc-arrow { background: var(--mc5); }
+
+/* ── Partes internas de la tarjeta ── */
+.mc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.mc-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.mc-iniciales {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.mc-arrow {
+  width: 26px; height: 26px;
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+
+.mc-nombre {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.2px;
+  line-height: 1.25;
+}
+
+.mc-modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.mc-mod {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 3px 7px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* ── Lista estudiantes ── */
+.est-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 16px;
+}
+.est-row-border { border-bottom: 1px solid var(--border); }
+</style>
+
+{% endblock %}

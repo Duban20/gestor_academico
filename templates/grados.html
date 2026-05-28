@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Grados{% endblock %}
+{% block nav_grados %}active{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+  <div>
+    <h1 class="page-title">Grados</h1>
+    <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">Selecciona un grado para gestionar sus materias</p>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+  {% for grado in grados %}
+
+  {% comment %}Paleta de colores cíclica para los iconos{% endcomment %}
+  {% with idx=forloop.counter0 %}
+  <a href="{% url 'detalle_grado' grado.id %}" class="grado-card-link">
+    <div class="grado-card-new grado-color-{{ idx|divisibleby:6|yesno:'0,' }}{% cycle 'c0' 'c1' 'c2' 'c3' 'c4' 'c5' %}">
+      <div class="grado-card-top">
+        <div class="grado-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342"/></svg>
+        </div>
+        <div class="grado-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </div>
+      </div>
+      <div class="grado-card-body">
+        <div class="grado-nombre">{{ grado.nombre }}</div>
+        {% if grado.descripcion %}
+        <div class="grado-desc">{{ grado.descripcion }}</div>
+        {% endif %}
+      </div>
+      <div class="grado-card-footer">
+        <span class="grado-stat">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+          {{ grado.materias.count }} materia{{ grado.materias.count|pluralize:"s" }}
+        </span>
+        <span class="grado-stat">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+          {{ grado.estudiantes.count }} estudiante{{ grado.estudiantes.count|pluralize:"s" }}
+        </span>
+      </div>
+    </div>
+  </a>
+  {% endwith %}
+  {% empty %}
+  <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);font-size:14px;">
+    No hay grados registrados.
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+/* Paleta de 6 colores para los iconos */
+:root {
+  --gc0: #4f6ef7; --gc0-bg: #eef1ff;
+  --gc1: #7c3aed; --gc1-bg: #f3eeff;
+  --gc2: #0891b2; --gc2-bg: #e0f7fa;
+  --gc3: #15803d; --gc3-bg: #f0fdf4;
+  --gc4: #b45309; --gc4-bg: #fffbeb;
+  --gc5: #be185d; --gc5-bg: #fdf2f8;
+}
+
+.grado-card-link { text-decoration:none; color:inherit; display:block; }
+
+.grado-card-new {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+  cursor: pointer;
+  height: 100%;
+}
+
+.grado-card-new:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.10);
+  border-color: #c7d0f0;
+}
+
+.grado-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.grado-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.grado-arrow {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  transition: background .15s, color .15s;
+}
+.grado-card-new:hover .grado-arrow {
+  background: var(--accent);
+  color: #fff;
+}
+
+.grado-card-body { flex: 1; }
+
+.grado-nombre {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.2px;
+  line-height: 1.2;
+}
+
+.grado-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.grado-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.grado-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Colores por posición usando nth-child */
+.grado-card-link:nth-child(6n+1) .grado-icon { background: var(--gc0-bg); color: var(--gc0); }
+.grado-card-link:nth-child(6n+2) .grado-icon { background: var(--gc1-bg); color: var(--gc1); }
+.grado-card-link:nth-child(6n+3) .grado-icon { background: var(--gc2-bg); color: var(--gc2); }
+.grado-card-link:nth-child(6n+4) .grado-icon { background: var(--gc3-bg); color: var(--gc3); }
+.grado-card-link:nth-child(6n+5) .grado-icon { background: var(--gc4-bg); color: var(--gc4); }
+.grado-card-link:nth-child(6n+6) .grado-icon { background: var(--gc5-bg); color: var(--gc5); }
+</style>
+
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% block title %}Actividades P{{ periodo_actual }} – {{ materia.nombre }}{% endblock %}
+{% block sidebar_extra %}{% with modulo_activo="actividades" %}{% include "includes/sidebar_materia.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <div class="breadcrumb">
+      <a href="{% url 'grados' %}">Inicio</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_grado' materia.grado.id %}">{{ materia.grado.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_materia' materia.id %}?periodo={{ periodo_actual }}">{{ materia.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <span>Actividades</span>
+    </div>
+    <h1 class="page-title">Actividades — {{ materia.nombre }}</h1>
+  </div>
+  <div class="topbar-actions">
+    <span class="periodo-badge">Periodo {{ periodo_actual }}</span>
+    <button class="btn btn-primary btn-sm" onclick="abrirNueva()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Nueva actividad
+    </button>
+  </div>
+</div>
+
+<!-- Contadores -->
+<div style="display:flex;gap:10px;margin-bottom:20px;">
+  <div class="card card-body" style="padding:13px 18px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:24px;font-weight:700;color:var(--est-pendiente-text);" id="cnt-pendiente">0</span>
+    <span style="font-size:12px;color:var(--text-muted);">Pendientes</span>
+  </div>
+  <div class="card card-body" style="padding:13px 18px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:24px;font-weight:700;color:var(--est-entregada-text);" id="cnt-entregada">0</span>
+    <span style="font-size:12px;color:var(--text-muted);">Entregadas</span>
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;" id="lista-act">
+  {% for a in actividades %}
+  <div class="act-item act-{{ a.estado }}" id="act-{{ a.id }}">
+    <div class="act-bar"></div>
+    <div class="act-content">
+      <div class="act-titulo">{{ a.titulo }}</div>
+      {% if a.descripcion %}<div class="act-desc">{{ a.descripcion }}</div>{% endif %}
+      <div class="act-footer">
+        <span class="badge badge-{{ a.estado }}">{{ a.get_estado_display }}</span>
+        <span class="act-fecha" id="fecha-{{ a.id }}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/></svg>
+          Entrega: {{ a.fecha_entrega }}
+        </span>
+      </div>
+    </div>
+    <div class="act-actions">
+      {% if a.estado == 'pendiente' %}
+      <button class="btn btn-success btn-sm" onclick="marcarEntregada({{ a.id }}, this)">✓ Entregada</button>
+      {% else %}
+      <button class="btn btn-outline btn-sm" onclick="marcarPendiente({{ a.id }}, this)">↩ Pendiente</button>
+      {% endif %}
+      <button class="btn-icon" onclick="abrirEditar({{ a.id }},'{{ a.titulo|escapejs }}','{{ a.descripcion|escapejs }}','{{ a.fecha_entrega }}')" title="Editar">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
+      </button>
+      <button class="btn-icon" onclick="eliminarAct({{ a.id }})" title="Eliminar" style="color:var(--nota-bajo-text);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/></svg>
+      </button>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state" id="empty-act">
+    <div class="empty-state-icon">📋</div>
+    <p>Sin actividades en este periodo.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal actividad -->
+<div class="modal-overlay" id="modal-act">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-act-titulo">Nueva actividad</div><div class="modal-subtitle">{{ materia.nombre }} · Periodo {{ periodo_actual }}</div></div>
+      <button class="btn-icon" onclick="cerrarModal('modal-act')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="act-edit-id">
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input type="text" class="form-control" id="act-titulo" placeholder="Ej: Taller de fracciones...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción (opcional)</label>
+        <textarea class="form-control" id="act-desc" placeholder="Instrucciones, materiales..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de entrega</label>
+        <input type="date" class="form-control" id="act-fecha">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-act')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarActividad()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MATERIA_ID = parseInt("{{ materia.id }}", 10);
+const PERIODO    = {{ periodo_actual }};
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+function fechaHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Calcular contadores al cargar
+(function(){ recalcContadores(); })();
+
+function recalcContadores(){
+  let p=0, e=0;
+  document.querySelectorAll('#lista-act .act-item').forEach(el=>{
+    if(el.classList.contains('act-pendiente')) p++;
+    else if(el.classList.contains('act-entregada')) e++;
+  });
+  document.getElementById('cnt-pendiente').textContent=p;
+  document.getElementById('cnt-entregada').textContent=e;
+}
+
+function abrirNueva(){
+  document.getElementById('act-edit-id').value='';
+  document.getElementById('act-titulo').value='';
+  document.getElementById('act-desc').value='';
+  document.getElementById('act-fecha').value=fechaHoy();
+  document.getElementById('modal-act-titulo').textContent='Nueva actividad';
+  abrirModal('modal-act');
+}
+
+function abrirEditar(id, titulo, desc, fecha){
+  document.getElementById('act-edit-id').value=id;
+  document.getElementById('act-titulo').value=titulo;
+  document.getElementById('act-desc').value=desc;
+  document.getElementById('act-fecha').value=fecha;
+  document.getElementById('modal-act-titulo').textContent='Editar actividad';
+  abrirModal('modal-act');
+}
+
+function guardarActividad(){
+  const editId = document.getElementById('act-edit-id').value;
+  const titulo = document.getElementById('act-titulo').value.trim();
+  const desc   = document.getElementById('act-desc').value.trim();
+  const fecha  = document.getElementById('act-fecha').value;
+  if(!titulo){ showToast('Escribe un título',false); return; }
+  if(!fecha) { showToast('Selecciona fecha',false); return; }
+
+  const url  = editId ? `/actividad/${editId}/actualizar/` : `/materia/${MATERIA_ID}/actividades/crear/`;
+  const body = editId
+    ? {titulo, descripcion:desc, fecha_entrega:fecha}
+    : {titulo, descripcion:desc, fecha_entrega:fecha, estado:'pendiente', periodo:PERIODO};
+
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},body:JSON.stringify(body)})
+    .then(r=>r.json()).then(d=>{
+      if(!d.ok){ showToast('Error al guardar',false); return; }
+      cerrarModal('modal-act');
+
+      if(editId){
+        // actualizar tarjeta existente
+        const item=document.getElementById('act-'+editId);
+        if(item){
+          item.querySelector('.act-titulo').textContent=titulo;
+          let descEl=item.querySelector('.act-desc');
+          if(desc){ if(descEl) descEl.textContent=desc; else item.querySelector('.act-content').insertAdjacentHTML('afterbegin',`<div class="act-desc">${desc}</div>`); }
+          else if(descEl) descEl.remove();
+          // ← FIX: actualizar texto de fecha
+          const fEl=document.getElementById('fecha-'+editId);
+          if(fEl) fEl.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/></svg> Entrega: ${fecha}`;
+          showToast('✓ Actividad actualizada');
+        }
+      } else {
+        document.getElementById('empty-act')?.remove();
+        document.getElementById('lista-act').insertAdjacentHTML('beforeend', buildActHTML(d.id,titulo,desc,fecha));
+        showToast('✓ Actividad creada');
+      }
+      recalcContadores();
+    }).catch(()=>showToast('Error de conexión',false));
+}
+
+function buildActHTML(id, titulo, desc, fecha){
+  return `<div class="act-item act-pendiente" id="act-${id}">
+    <div class="act-bar"></div>
+    <div class="act-content">
+      <div class="act-titulo">${titulo}</div>
+      ${desc?`<div class="act-desc">${desc}</div>`:''}
+      <div class="act-footer">
+        <span class="badge badge-pendiente">Pendiente</span>
+        <span class="act-fecha" id="fecha-${id}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/></svg>
+          Entrega: ${fecha}
+        </span>
+      </div>
+    </div>
+    <div class="act-actions">
+      <button class="btn btn-success btn-sm" onclick="marcarEntregada(${id},this)">✓ Entregada</button>
+      <button class="btn-icon" onclick="abrirEditar(${id},'${titulo.replace(/'/g,"\\'")}','${desc.replace(/'/g,"\\'")}','${fecha}')" title="Editar">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
+      </button>
+      <button class="btn-icon" onclick="eliminarAct(${id})" style="color:var(--nota-bajo-text);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+function cambiarEstado(id, estado){
+  return fetch(`/actividad/${id}/actualizar/`,{
+    method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+    body:JSON.stringify({estado})
+  }).then(r=>r.json());
+}
+
+function marcarEntregada(id, btn){
+  cambiarEstado(id,'entregada').then(d=>{
+    if(!d.ok){ showToast('Error',false); return; }
+    const item=document.getElementById('act-'+id);
+    item.classList.replace('act-pendiente','act-entregada');
+    item.querySelector('.badge').className='badge badge-entregada';
+    item.querySelector('.badge').textContent='Entregada';
+    // reemplazar botón
+    btn.outerHTML=`<button class="btn btn-outline btn-sm" onclick="marcarPendiente(${id},this)">↩ Pendiente</button>`;
+    recalcContadores(); showToast('✓ Marcada como entregada');
+  });
+}
+
+function marcarPendiente(id, btn){
+  cambiarEstado(id,'pendiente').then(d=>{
+    if(!d.ok){ showToast('Error',false); return; }
+    const item=document.getElementById('act-'+id);
+    item.classList.replace('act-entregada','act-pendiente');
+    item.querySelector('.badge').className='badge badge-pendiente';
+    item.querySelector('.badge').textContent='Pendiente';
+    btn.outerHTML=`<button class="btn btn-success btn-sm" onclick="marcarEntregada(${id},this)">✓ Entregada</button>`;
+    recalcContadores(); showToast('Marcada como pendiente');
+  });
+}
+
+function eliminarAct(id){
+  if(!confirm('¿Eliminar esta actividad?')) return;
+  fetch(`/actividad/${id}/eliminar/`,{method:'POST',headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){ document.getElementById('act-'+id)?.remove(); recalcContadores(); showToast('Eliminada'); }
+      else showToast('Error',false);
+    });
+}
+</script>
+{% endblock %}

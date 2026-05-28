@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load extras %}
+{% block title %}Comportamiento P{{ periodo_actual }} – {{ materia.nombre }}{% endblock %}
+{% block sidebar_extra %}{% with modulo_activo="comportamiento" %}{% include "includes/sidebar_materia.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <div class="breadcrumb">
+      <a href="{% url 'grados' %}">Inicio</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_grado' materia.grado.id %}">{{ materia.grado.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_materia' materia.id %}?periodo={{ periodo_actual }}">{{ materia.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <span>Comportamiento</span>
+    </div>
+    <h1 class="page-title">Comportamiento — {{ materia.nombre }}</h1>
+  </div>
+  <div class="topbar-actions">
+    <span class="periodo-badge">Periodo {{ periodo_actual }}</span>
+    <button class="btn btn-primary btn-sm" onclick="abrirModal('modal-reporte')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Nuevo reporte
+    </button>
+  </div>
+</div>
+
+<!-- Contador -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+  <div class="card card-body" style="padding:14px 20px;display:inline-flex;align-items:center;gap:12px;">
+    <span style="font-size:28px;font-weight:700;color:var(--nota-bajo-text);" id="contador-reportes">{{ reportes|length }}</span>
+    <span style="font-size:12.5px;color:var(--text-muted);">reporte{{ reportes|length|pluralize:"s" }} en Periodo {{ periodo_actual }}</span>
+  </div>
+</div>
+
+<!-- Lista -->
+<div style="display:flex;flex-direction:column;gap:8px;" id="lista-reportes">
+  {% for r in reportes %}
+  <div class="reporte-card" id="rep-{{ r.id }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div class="reporte-est">
+        <div class="avatar" style="cursor:default;width:30px;height:30px;font-size:10px;">
+          {% if r.estudiante.foto %}<img src="{{ r.estudiante.foto.url }}" alt="">{% else %}{{ r.estudiante.iniciales }}{% endif %}
+        </div>
+        {{ r.estudiante.nombre }}
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span class="reporte-fecha">{{ r.fecha }}</span>
+        <button class="btn-icon" onclick="eliminarReporte({{ r.id }})" title="Eliminar" style="color:var(--nota-bajo-text);">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/></svg>
+        </button>
+      </div>
+    </div>
+    <div><span class="tipo-badge">{{ r.get_tipo_falta_display }}</span></div>
+    <div class="reporte-desc">{{ r.descripcion }}</div>
+  </div>
+  {% empty %}
+  <div class="empty-state" id="empty-rep">
+    <div class="empty-state-icon">✅</div>
+    <p>Sin reportes de comportamiento en este periodo.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal nuevo reporte -->
+<div class="modal-overlay" id="modal-reporte">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Nuevo reporte</div><div class="modal-subtitle">{{ materia.nombre }} · Periodo {{ periodo_actual }}</div></div>
+      <button class="btn-icon" onclick="cerrarModal('modal-reporte')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Buscador de estudiante -->
+      <div class="form-group">
+        <label class="form-label">Estudiante</label>
+        <div class="search-dropdown" id="search-dropdown">
+          <div id="search-selected-wrap" style="display:none;">
+            <div class="search-selected" id="search-selected-display">
+              <button onclick="limpiarEstudiante()">×</button>
+            </div>
+          </div>
+          <div id="search-input-wrap" class="search-input-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+            <input type="text" class="form-control search-input" id="est-search" placeholder="Buscar estudiante..." autocomplete="off" oninput="filtrarEstudiantes(this.value)" onfocus="abrirResultados()">
+          </div>
+          <div class="search-results" id="search-results">
+            {% for e in estudiantes %}
+            <div class="search-result-item" onclick="seleccionarEstudiante({{ e.id }},'{{ e.nombre|escapejs }}','{% if e.foto %}{{ e.foto.url }}{% endif %}','{{ e.iniciales }}')" data-nombre="{{ e.nombre|lower }}">
+              <div class="avatar" style="cursor:default;width:26px;height:26px;font-size:9px;pointer-events:none;">
+                {% if e.foto %}<img src="{{ e.foto.url }}" alt="">{% else %}{{ e.iniciales }}{% endif %}
+              </div>
+              {{ e.nombre }}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <input type="hidden" id="rep-est-id" value="">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Tipo de falta</label>
+          <select class="form-control" id="rep-tipo">
+            {% for val, label in tipos_falta %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" class="form-control" id="rep-fecha">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción del incidente</label>
+        <textarea class="form-control" id="rep-desc" placeholder="Describe lo sucedido..." style="min-height:90px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-reporte')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarReporte()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Guardar reporte
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MATERIA_ID = parseInt("{{ materia.id }}", 10);
+const PERIODO    = {{ periodo_actual }};
+const CSRF_TOKEN = '{{ csrf_token }}';
+const TIPOS_LABEL = { {% for v,l in tipos_falta %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+
+function fechaHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+document.getElementById('rep-fecha').value = fechaHoy();
+
+// ── Buscador ──
+function filtrarEstudiantes(q){
+  q = q.toLowerCase();
+  document.querySelectorAll('.search-result-item').forEach(el=>{
+    el.style.display = el.dataset.nombre.includes(q) ? '' : 'none';
+  });
+  abrirResultados();
+}
+function abrirResultados(){
+  document.getElementById('search-results').classList.add('open');
+}
+function seleccionarEstudiante(id, nombre, fotoUrl, iniciales){
+  document.getElementById('rep-est-id').value = id;
+  const sel = document.getElementById('search-selected-display');
+  const avatarHtml = fotoUrl
+    ? `<div class="avatar" style="cursor:default;width:26px;height:26px;font-size:9px;"><img src="${fotoUrl}" alt=""></div>`
+    : `<div class="avatar" style="cursor:default;width:26px;height:26px;font-size:9px;">${iniciales}</div>`;
+  sel.innerHTML = `${avatarHtml}<span style="font-weight:500;">${nombre}</span><button onclick="limpiarEstudiante()">×</button>`;
+  document.getElementById('search-selected-wrap').style.display='';
+  document.getElementById('search-input-wrap').style.display='none';
+  document.getElementById('search-results').classList.remove('open');
+  document.getElementById('est-search').value='';
+  document.querySelectorAll('.search-result-item').forEach(el=>el.style.display='');
+}
+function limpiarEstudiante(){
+  document.getElementById('rep-est-id').value='';
+  document.getElementById('search-selected-wrap').style.display='none';
+  document.getElementById('search-input-wrap').style.display='';
+  setTimeout(()=>document.getElementById('est-search').focus(),50);
+}
+document.addEventListener('click', e=>{
+  if(!document.getElementById('search-dropdown').contains(e.target))
+    document.getElementById('search-results').classList.remove('open');
+});
+
+// ── Guardar reporte ──
+function guardarReporte(){
+  const estId = document.getElementById('rep-est-id').value;
+  const tipo  = document.getElementById('rep-tipo').value;
+  const fecha = document.getElementById('rep-fecha').value;
+  const desc  = document.getElementById('rep-desc').value.trim();
+  if(!estId){ showToast('Selecciona un estudiante',false); return; }
+  if(!desc)  { showToast('Escribe una descripción',false); return; }
+
+  fetch(`/materia/${MATERIA_ID}/comportamiento/crear/`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+    body: JSON.stringify({estudiante_id:estId,tipo_falta:tipo,fecha,descripcion:desc,periodo:PERIODO})
+  }).then(r=>r.json()).then(d=>{
+    if(!d.ok){ showToast('Error al guardar',false); return; }
+    cerrarModal('modal-reporte');
+    showToast('✓ Reporte guardado');
+
+    const selDisplay = document.getElementById('search-selected-display');
+    const avatarHtml = selDisplay.querySelector('.avatar')?.outerHTML || '<div class="avatar" style="cursor:default;width:30px;height:30px;font-size:10px;">?</div>';
+    const nombre = selDisplay.querySelector('span')?.textContent || '';
+
+    document.getElementById('empty-rep')?.remove();
+    document.getElementById('lista-reportes').insertAdjacentHTML('afterbegin',`
+      <div class="reporte-card" id="rep-${d.id}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div class="reporte-est">${avatarHtml.replace('26px','30px').replace('9px','10px')} ${nombre}</div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span class="reporte-fecha">${fecha}</span>
+            <button class="btn-icon" onclick="eliminarReporte(${d.id})" style="color:var(--nota-bajo-text);">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/></svg>
+            </button>
+          </div>
+        </div>
+        <div><span class="tipo-badge">${TIPOS_LABEL[tipo]}</span></div>
+        <div class="reporte-desc">${desc}</div>
+      </div>`);
+
+    const cnt = document.getElementById('contador-reportes');
+    cnt.textContent = parseInt(cnt.textContent)+1;
+    // reset
+    limpiarEstudiante();
+    document.getElementById('rep-desc').value='';
+  }).catch(()=>showToast('Error de conexión',false));
+}
+
+function eliminarReporte(id){
+  if(!confirm('¿Eliminar este reporte?')) return;
+  fetch(`/reporte/${id}/eliminar/`,{method:'POST',headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){
+        document.getElementById('rep-'+id)?.remove();
+        const cnt=document.getElementById('contador-reportes');
+        cnt.textContent=Math.max(0,parseInt(cnt.textContent)-1);
+        showToast('Reporte eliminado');
+      } else showToast('Error',false);
+    });
+}
+</script>
+{% endblock %}

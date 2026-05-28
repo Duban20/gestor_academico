@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="d-flex
+justify-content-between
+mb-4">
+
+<div>
+
+<h2>
+
+{{curso.nombre}}
+
+</h2>
+
+<p class="text-secondary">
+
+Tabla de estudiantes
+
+</p>
+
+</div>
+
+<div>
+
+<button
+class="btn btn-primary">
+
+Agregar columna
+
+</button>
+
+<button
+class="btn btn-success">
+
+Asistencias
+
+</button>
+
+</div>
+
+</div>
+
+
+<div class="card
+card-modern
+p-4">
+
+<div class="table-responsive">
+
+<table class="table
+align-middle">
+
+<thead>
+
+<tr>
+
+<th>
+
+Estudiante
+
+</th>
+
+{% for c in categorias %}
+
+<th>
+
+{{c.nombre}}
+
+<br>
+
+<small>
+
+{{c.porcentaje}}%
+
+</small>
+
+</th>
+
+{% endfor %}
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for e in estudiantes %}
+
+<tr>
+
+<td>
+
+{{e.nombre}}
+
+</td>
+
+{% for c in categorias %}
+
+<td>
+
+20
+
+</td>
+
+{% endfor %}
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

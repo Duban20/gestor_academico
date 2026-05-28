@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="d-flex
+justify-content-between
+mb-4">
+
+<h2>Cursos</h2>
+
+<button class="btn btn-primary">
+Nuevo curso
+</button>
+
+</div>
+
+<div class="row">
+
+{% for curso in cursos %}
+
+<div class="col-md-4">
+
+<div class="card card-modern p-4">
+
+<h4>
+{{curso.nombre}}
+</h4>
+
+<p>
+{{curso.descripcion}}
+</p>
+
+<a
+href="{% url 'detalle_curso' curso.id %}"
+
+class="btn btn-outline-primary">
+
+Ingresar
+
+</a>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}

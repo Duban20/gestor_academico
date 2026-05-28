@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load extras %}
+{% block title %}Notas P{{ periodo_actual }} – {{ materia.nombre }}{% endblock %}
+{% block mobile_title %}Notas{% endblock %}
+{% block mobile_periodo %}<span class="mobile-periodo-badge">P{{ periodo_actual }}</span>{% endblock %}
+{% block sidebar_extra %}{% with modulo_activo="notas" %}{% include "includes/sidebar_materia.html" %}{% endwith %}{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div>
+    <div class="breadcrumb">
+      <a href="{% url 'grados' %}">Inicio</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'detalle_grado' materia.grado.id %}">{{ materia.grado.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <span>{{ materia.nombre }}</span>
+    </div>
+    <h1 class="page-title">Notas — {{ materia.nombre }}</h1>
+  </div>
+  <div class="topbar-actions">
+    <span class="periodo-badge">Periodo {{ periodo_actual }}</span>
+    <div id="pct-indicator" class="pct-total {% if total_porcentaje == 100 %}pct-ok{% elif total_porcentaje > 100 %}pct-error{% else %}pct-warn{% endif %}">
+      <span id="pct-total-num">{{ total_porcentaje }}</span>%
+    </div>
+    <span class="saving-dot" id="saving-dot"></span>
+    <a href="{% url 'agregar_categoria' materia.id %}?periodo={{ periodo_actual }}" class="btn btn-primary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      Agregar actividad
+    </a>
+  </div>
+</div>
+
+<div class="leyenda" style="margin-bottom:16px;">
+  <span style="font-size:11px;color:var(--text-muted);font-weight:500;margin-right:4px;">Rangos:</span>
+  <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-bajo-text);"></span>20–69 Bajo</span>
+  <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-basico-text);"></span>70–79 Básico</span>
+  <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-alto-text);"></span>80–89 Alto</span>
+  <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-superior-text);"></span>90–100 Superior</span>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    <div class="table-scroll">
+      <table class="tabla-notas" id="tabla-notas">
+        <thead>
+          <tr>
+            <th class="th-estudiante">Estudiante</th>
+            {% for c in categorias %}
+            <th class="th-categoria" id="th-cat-{{ c.id }}">
+              <div class="th-cat-inner">
+                <div style="display:flex;align-items:center;gap:3px;">
+                  <input class="cat-nombre-input" data-cat-id="{{ c.id }}" data-field="nombre" value="{{ c.nombre }}">
+                  <button class="btn-eliminar-col" onclick="pedirEliminarCat({{ c.id }},'{{ c.nombre|escapejs }}')" title="Eliminar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="10" height="10"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <div class="porcentaje-row">
+                  <input class="porcentaje-input" type="number" min="0" max="100"
+                    data-cat-id="{{ c.id }}" data-field="porcentaje" value="{{ c.porcentaje }}">
+                  <span class="porcentaje-label">%</span>
+                </div>
+              </div>
+            </th>
+            {% endfor %}
+            <th class="th-categoria th-final">
+              <div class="th-cat-inner" style="align-items:center;">
+                <span style="font-size:10.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;">Final</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in datos %}
+          <tr data-row-idx="{{ forloop.counter0 }}">
+            <td class="td-estudiante">
+              <div class="td-est-inner" data-est-id="{{ fila.estudiante.id }}">
+                <div class="avatar"
+                  onclick="abrirLightbox({{ fila.estudiante.id }},'{{ fila.estudiante.nombre|escapejs }}','{% if fila.estudiante.foto %}{{ fila.estudiante.foto.url }}{% endif %}','{{ csrf_token }}')"
+                  title="Ver foto">
+                  {% if fila.estudiante.foto %}<img src="{{ fila.estudiante.foto.url }}" alt="">{% else %}{{ fila.estudiante.iniciales }}{% endif %}
+                </div>
+                <span class="td-est-nombre">{{ fila.estudiante.nombre }}</span>
+              </div>
+            </td>
+            {% for nota in fila.notas %}
+            <td class="td-nota {% if nota.valor is not None %}{{ nota.valor|color_nota }}{% endif %}"
+                id="td-nota-{{ nota.id }}"
+                data-nota-id="{{ nota.id }}"
+                data-cat-id="{{ nota.categoria.id }}">
+              <div class="nota-input-wrap">
+                <input class="nota-input"
+                  type="number" min="20" max="100"
+                  {% if nota.valor is not None %}value="{{ nota.valor }}"{% endif %}
+                  placeholder="—"
+                  data-nota-id="{{ nota.id }}">
+              </div>
+            </td>
+            {% endfor %}
+            <td class="td-nota td-final" id="td-final-{{ forloop.counter0 }}">
+              <div class="nota-input-wrap">
+                <span class="nota-final-val" id="final-{{ forloop.counter0 }}">—</span>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{{ categorias.count|add:2 }}" style="padding:40px;text-align:center;color:var(--text-muted);">
+              Sin estudiantes.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmar eliminar columna -->
+<div class="modal-overlay" id="modal-confirmar">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Eliminar actividad</div>
+        <div class="modal-subtitle" id="conf-sub"></div>
+      </div>
+      <button class="btn-icon" onclick="cerrarModal('modal-confirmar')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p id="conf-msg" style="font-size:13px;line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-confirmar')">Cancelar</button>
+      <button class="btn btn-danger" id="conf-ok">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Celda sin nota: fondo neutro */
+.nota-input::placeholder { color: #c4c9d8; font-size: 15px; letter-spacing: 1px; }
+.td-nota:not(.nota-bajo):not(.nota-basico):not(.nota-alto):not(.nota-superior) .nota-input {
+  background: var(--bg);
+  color: var(--text-muted);
+}
+</style>
+
+<script>
+const MATERIA_ID = parseInt("{{ materia.id }}", 10);
+const CSRF_TOKEN = '{{ csrf_token }}';
+const dot = document.getElementById('saving-dot');
+let saveTimer = null, catPendiente = null;
+
+function setSaving() { dot.classList.remove('saved'); dot.classList.add('saving'); }
+function setSaved()  { dot.classList.remove('saving'); dot.classList.add('saved'); setTimeout(() => dot.classList.remove('saved'), 2000); }
+
+function colorClass(v) {
+  if (v <= 69) return 'nota-bajo';
+  if (v <= 79) return 'nota-basico';
+  if (v <= 89) return 'nota-alto';
+  return 'nota-superior';
+}
+
+function getPcts() {
+  const m = {};
+  document.querySelectorAll('.porcentaje-input').forEach(el => { m[el.dataset.catId] = parseInt(el.value) || 0; });
+  return m;
+}
+
+/* ── Nota final ponderada — ignora vacíos ── */
+function recalcFinal(tr) {
+  const idx = tr.dataset.rowIdx, pcts = getPcts();
+  let suma = 0, tot = 0;
+  tr.querySelectorAll('td.td-nota:not(.td-final)').forEach(td => {
+    const inp = td.querySelector('.nota-input');
+    if (!inp || inp.value === '') return; // ignorar celdas vacías
+    const p = pcts[td.dataset.catId] || 0;
+    suma += parseInt(inp.value) * p;
+    tot  += p;
+  });
+  const sp = document.getElementById('final-' + idx);
+  const tdF = document.getElementById('td-final-' + idx);
+  if (!tot) { sp.textContent = '—'; tdF.className = 'td-nota td-final'; return; }
+  const res = Math.round(suma / tot);
+  sp.textContent = res;
+  tdF.className = 'td-nota td-final ' + colorClass(res);
+}
+
+function recalcTodas() {
+  document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]').forEach(tr => recalcFinal(tr));
+}
+recalcTodas();
+
+/* ── Guardar nota ── */
+function guardarEnServidor(notaId, valor) {
+  setSaving(); clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    fetch(`/nota/${notaId}/actualizar/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      body: JSON.stringify({ valor: valor }) // valor puede ser null o número
+    })
+    .then(r => r.json())
+    .then(d => { if (d.ok) setSaved(); else showToast('Error al guardar', false); })
+    .catch(() => showToast('Error de conexión', false));
+  }, 400);
+}
+
+function procesarNota(inp) {
+  const notaId = inp.dataset.notaId;
+  const tdEl   = document.getElementById('td-nota-' + notaId);
+  const catId  = tdEl.dataset.catId;
+
+  // ── Campo borrado → guardar null, quitar color ──
+  if (inp.value === '') {
+    tdEl.className = 'td-nota';
+    tdEl.dataset.catId = catId;
+    recalcFinal(inp.closest('tr'));
+    guardarEnServidor(notaId, null);
+    return;
+  }
+
+  // ── Valor inválido → tratar como borrado ──
+  let v = parseInt(inp.value);
+  if (isNaN(v)) { inp.value = ''; procesarNota(inp); return; }
+
+  // ── Clampear al rango 20-100 ──
+  v = Math.max(20, Math.min(100, v));
+  inp.value = v;
+
+  // ── Aplicar color inmediatamente ──
+  tdEl.className = 'td-nota ' + colorClass(v);
+  tdEl.dataset.catId = catId;
+
+  recalcFinal(inp.closest('tr'));
+  guardarEnServidor(notaId, v);
+}
+
+document.querySelectorAll('.nota-input').forEach(inp => {
+  inp.addEventListener('change', function () { procesarNota(this); });
+  inp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      procesarNota(this);
+      const all = Array.from(document.querySelectorAll('.nota-input'));
+      const i = all.indexOf(this);
+      if (i >= 0 && i + 1 < all.length) { all[i + 1].focus(); all[i + 1].select(); }
+    }
+  });
+  inp.addEventListener('focus', function () { this.select(); });
+});
+
+/* ── Porcentajes ── */
+let pctTimer = null;
+function recalcTotal() {
+  let t = 0;
+  document.querySelectorAll('.porcentaje-input').forEach(i => { t += parseInt(i.value) || 0; });
+  document.getElementById('pct-total-num').textContent = t;
+  const el = document.getElementById('pct-indicator');
+  el.className = 'pct-total ' + (t === 100 ? 'pct-ok' : t > 100 ? 'pct-error' : 'pct-warn');
+  recalcTodas();
+}
+document.querySelectorAll('.cat-nombre-input, .porcentaje-input').forEach(inp => {
+  inp.addEventListener('change', function () {
+    const catId = this.dataset.catId, field = this.dataset.field;
+    const value = field === 'porcentaje' ? parseInt(this.value) || 0 : this.value.trim();
+    if (field === 'porcentaje') recalcTotal();
+    setSaving(); clearTimeout(pctTimer);
+    pctTimer = setTimeout(() => {
+      fetch(`/categoria/${catId}/actualizar/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ [field]: value })
+      }).then(r => r.json()).then(d => { if (d.ok) setSaved(); });
+    }, 600);
+  });
+});
+
+/* ── Eliminar columna ── */
+function pedirEliminarCat(catId, nombre) {
+  catPendiente = catId;
+  const hayDatos = Array.from(document.querySelectorAll(`td[data-cat-id="${catId}"] .nota-input`))
+    .some(i => i.value !== '');
+  document.getElementById('conf-sub').textContent = `"${nombre}"`;
+  document.getElementById('conf-msg').innerHTML = hayDatos
+    ? `<strong>Esta actividad tiene notas registradas.</strong><br>Se borrarán permanentemente todas las notas de <em>${nombre}</em>. ¿Continuar?`
+    : `¿Eliminar la actividad <em>${nombre}</em>? Esta acción no se puede deshacer.`;
+  document.getElementById('conf-ok').onclick = () => {
+    fetch(`/categoria/${catPendiente}/eliminar/`, { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN } })
+      .then(r => r.json()).then(d => {
+        if (d.ok) {
+          document.getElementById('th-cat-' + catPendiente)?.remove();
+          document.querySelectorAll(`td[data-cat-id="${catPendiente}"]`).forEach(td => td.remove());
+          recalcTodas(); recalcTotal();
+          cerrarModal('modal-confirmar');
+          showToast('Actividad eliminada');
+        } else showToast('Error', false);
+      });
+  };
+  abrirModal('modal-confirmar');
+}
+</script>
+{% endblock %}
