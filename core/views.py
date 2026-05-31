@@ -11,16 +11,16 @@ from .models import (
 
 # ── Columnas por defecto (se crean si la materia no tiene ninguna) ──
 CATEGORIAS_DEFAULT = [
-    {"nombre": "Tall", "descripcion": "Talleres y Act. en clases",     "porcentaje": 10},
-    {"nombre": "Tar.", "descripcion": "Tareas",                         "porcentaje":  5},
-    {"nombre": "Plat", "descripcion": "Plataforma y Act Digitales",     "porcentaje": 10},
-    {"nombre": "Cuad", "descripcion": "Cuadernos",                      "porcentaje":  5},
-    {"nombre": "Exp.", "descripcion": "Exposiciones",                   "porcentaje": 10},
+    {"nombre": "Taller", "descripcion": "Talleres y Act. en clases",     "porcentaje": 10},
+    {"nombre": "Tarea", "descripcion": "Tareas",                         "porcentaje":  5},
+    {"nombre": "Plataforma", "descripcion": "Plataforma y Act Digitales",     "porcentaje": 10},
+    {"nombre": "Cuaderno", "descripcion": "Cuadernos",                      "porcentaje":  5},
+    {"nombre": "Exposición", "descripcion": "Exposiciones",                   "porcentaje": 10},
     {"nombre": "Quiz", "descripcion": "Quices",                         "porcentaje": 10},
-    {"nombre": "EvaO", "descripcion": "Evaluación oral o escrita",      "porcentaje": 30},
-    {"nombre": "Part", "descripcion": "Participación en clase",         "porcentaje": 10},
-    {"nombre": "Disc", "descripcion": "Disciplina",                     "porcentaje":  5},
-    {"nombre": "Auto", "descripcion": "Autoevaluación",                 "porcentaje":  5},
+    {"nombre": "Evaluación", "descripcion": "Evaluación oral o escrita",      "porcentaje": 30},
+    {"nombre": "Participación", "descripcion": "Participación en clase",         "porcentaje": 10},
+    {"nombre": "Disciplina", "descripcion": "Disciplina",                     "porcentaje":  5},
+    {"nombre": "Autoev.", "descripcion": "Autoevaluación",                 "porcentaje":  5},
 ]
 
 
