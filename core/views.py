@@ -1,12 +1,28 @@
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
 
+from django.http import JsonResponse, HttpResponse
+from .excel_export import generar_excel_propio
 from .models import (
     Grado, Materia, Estudiante, CategoriaNota, Nota,
     Asistencia, ReporteComportamiento, ActividadPendiente, PERIODOS
 )
+
+# ── Columnas por defecto (se crean si la materia no tiene ninguna) ──
+CATEGORIAS_DEFAULT = [
+    {"nombre": "Tall", "descripcion": "Talleres y Act. en clases",     "porcentaje": 10},
+    {"nombre": "Tar.", "descripcion": "Tareas",                         "porcentaje":  5},
+    {"nombre": "Plat", "descripcion": "Plataforma y Act Digitales",     "porcentaje": 10},
+    {"nombre": "Cuad", "descripcion": "Cuadernos",                      "porcentaje":  5},
+    {"nombre": "Exp.", "descripcion": "Exposiciones",                   "porcentaje": 10},
+    {"nombre": "Quiz", "descripcion": "Quices",                         "porcentaje": 10},
+    {"nombre": "EvaO", "descripcion": "Evaluación oral o escrita",      "porcentaje": 30},
+    {"nombre": "Part", "descripcion": "Participación en clase",         "porcentaje": 10},
+    {"nombre": "Disc", "descripcion": "Disciplina",                     "porcentaje":  5},
+    {"nombre": "Auto", "descripcion": "Autoevaluación",                 "porcentaje":  5},
+]
+
 
 # ── helpers ──────────────────────────────────────
 def _periodo(request, default=1):
@@ -55,9 +71,22 @@ def subir_foto_estudiante(request, est_id):
 #  NOTAS
 # ════════════════════════════════════════════════
 def detalle_materia(request, id):
-    materia    = get_object_or_404(Materia, id=id)
-    periodo    = _periodo(request)
-    estudiantes = materia.grado.estudiantes.all()
+    materia     = get_object_or_404(Materia, id=id)
+    periodo     = _periodo(request)
+    estudiantes = materia.grado.estudiantes.all().order_by('nombre')
+
+    # Crear columnas por defecto si la materia no tiene ninguna en ningún periodo
+    if not materia.categorias.exists():
+        for orden, cat in enumerate(CATEGORIAS_DEFAULT):
+            for p in range(1, 5):
+                CategoriaNota.objects.create(
+                    materia=materia, periodo=p,
+                    nombre=cat["nombre"],
+                    descripcion=cat["descripcion"],
+                    porcentaje=cat["porcentaje"],
+                    orden=orden,
+                )
+
     categorias  = materia.categorias.filter(periodo=periodo)
 
     datos = []
@@ -277,3 +306,57 @@ def actualizar_actividad(request, act_id):
 def eliminar_actividad(request, act_id):
     get_object_or_404(ActividadPendiente, id=act_id).delete()
     return JsonResponse({"ok": True})
+
+# ════════════════════════════════════════════════
+#  EXPORTAR EXCEL
+# ════════════════════════════════════════════════
+
+def exportar_excel(request, materia_id):
+    materia     = get_object_or_404(Materia, id=materia_id)
+    periodo     = _periodo(request)
+    # Solo exportar estudiantes activos
+    estudiantes = materia.grado.estudiantes.filter(activo=True).order_by("nombre")
+    categorias  = materia.categorias.filter(periodo=periodo).order_by("orden")
+
+    notas_dict = {}
+    for nota in Nota.objects.filter(categoria__in=categorias, estudiante__in=estudiantes):
+        notas_dict[(nota.estudiante_id, nota.categoria_id)] = nota.valor
+
+    excel_file = generar_excel_propio(
+        materia=materia,
+        periodo=periodo,
+        estudiantes=estudiantes,
+        categorias=categorias,
+        notas_dict=notas_dict,
+    )
+
+    nombre = f"Notas_{materia.grado.nombre}_{materia.nombre}_P{periodo}.xlsx"
+    nombre = nombre.replace(" ", "_").replace("/", "-")
+
+    response = HttpResponse(
+        excel_file.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{nombre}"'
+    return response
+
+
+@require_POST
+def toggle_activo(request, est_id):
+    est = get_object_or_404(Estudiante, id=est_id)
+    try:
+        data = json.loads(request.body)
+        est.activo = bool(data.get("activo", not est.activo))
+        est.razon_inactivo = data.get("razon", est.razon_inactivo)
+        est.save()
+        return JsonResponse({"ok": True, "activo": est.activo, "razon": est.razon_inactivo})
+    except (ValueError, KeyError) as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
+
+@require_POST
+def toggle_participativo(request, est_id):
+    est = get_object_or_404(Estudiante, id=est_id)
+    est.participativo = not est.participativo
+    est.save()
+    return JsonResponse({"ok": True, "participativo": est.participativo})

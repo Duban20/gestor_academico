@@ -16,14 +16,21 @@ class Grado(models.Model):
 
 
 class Estudiante(models.Model):
-    grado  = models.ForeignKey(Grado, on_delete=models.CASCADE, related_name="estudiantes")
-    nombre = models.CharField(max_length=120)
-    codigo = models.CharField(max_length=50, blank=True)
-    foto   = models.ImageField(upload_to="estudiantes/", blank=True, null=True)
-
+    grado        = models.ForeignKey(Grado, on_delete=models.CASCADE, related_name="estudiantes")
+    nombre       = models.CharField(max_length=120)
+    codigo       = models.CharField(max_length=50, blank=True)
+    foto         = models.ImageField(upload_to="estudiantes/", blank=True, null=True)
+    activo       = models.BooleanField(default=True)
+    razon_inactivo = models.TextField(blank=True, default="",
+                                      verbose_name="Razón de inactividad",
+                                      help_text="Ej: Retiro voluntario, traslado, etc.")
+    participativo = models.BooleanField(default=False,
+                                        verbose_name="Estudiante participativo",
+                                        help_text="Marcar si el estudiante destaca por su participación")
+ 
     def __str__(self):
         return self.nombre
-
+ 
     def iniciales(self):
         partes = self.nombre.strip().split()
         if len(partes) >= 2:
@@ -43,11 +50,12 @@ class Materia(models.Model):
 #  NOTAS  (por periodo)
 # ──────────────────────────────────────────────────
 class CategoriaNota(models.Model):
-    materia    = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name="categorias")
-    periodo    = models.IntegerField(choices=PERIODOS, default=1)
-    nombre     = models.CharField(max_length=100)
-    porcentaje = models.IntegerField(default=100)
-    orden      = models.IntegerField(default=0)
+    materia     = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name="categorias")
+    periodo     = models.IntegerField(choices=PERIODOS, default=1)
+    nombre      = models.CharField(max_length=100)
+    descripcion = models.CharField(max_length=200, blank=True, default="")
+    porcentaje  = models.IntegerField(default=100)
+    orden       = models.IntegerField(default=0)
 
     class Meta:
         ordering = ["periodo", "orden"]

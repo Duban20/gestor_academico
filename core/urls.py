@@ -16,8 +16,12 @@ urlpatterns = [
 
     # Foto estudiante
     path('estudiante/<int:est_id>/foto/', subir_foto_estudiante, name='subir_foto_estudiante'),
+    path('estudiante/<int:est_id>/toggle-activo/', toggle_activo, name='toggle_activo'),
+    path('estudiante/<int:est_id>/toggle-participativo/', toggle_participativo, name='toggle_participativo'),
 
     # Asistencia
+    path('materia/<int:materia_id>/exportar/', exportar_excel, name='exportar_excel'),
+
     path('materia/<int:materia_id>/asistencia/', asistencia_materia, name='asistencia_materia'),
     path('materia/<int:materia_id>/asistencia/api/', asistencia_api, name='asistencia_api'),
     path('materia/<int:materia_id>/asistencia/historial/', historial_asistencia, name='historial_asistencia'),

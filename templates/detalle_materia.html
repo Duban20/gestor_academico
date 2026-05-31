@@ -21,6 +21,12 @@
       <span id="pct-total-num">{{ total_porcentaje }}</span>%
     </div>
     <span class="saving-dot" id="saving-dot"></span>
+    <a href="{% url 'exportar_excel' materia.id %}?periodo={{ periodo_actual }}"
+       class="btn btn-success btn-sm"
+       title="Descargar Excel con las notas de este periodo">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+      Descargar Excel
+    </a>
     <a href="{% url 'agregar_categoria' materia.id %}?periodo={{ periodo_actual }}" class="btn btn-primary btn-sm">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
       Agregar actividad
@@ -34,6 +40,9 @@
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-basico-text);"></span>70–79 Básico</span>
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-alto-text);"></span>80–89 Alto</span>
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-superior-text);"></span>90–100 Superior</span>
+  <span style="width:1px;height:14px;background:var(--border);display:inline-block;margin:0 4px;"></span>
+  <span class="leyenda-item"><span style="font-size:13px;line-height:1;">⭐</span> Participativo</span>
+  <span class="leyenda-item"><span style="font-size:12px;line-height:1;color:var(--nota-bajo-text);">●</span> Inactivo (bloqueado)</span>
 </div>
 
 <div class="card">
@@ -47,7 +56,8 @@
             <th class="th-categoria" id="th-cat-{{ c.id }}">
               <div class="th-cat-inner">
                 <div style="display:flex;align-items:center;gap:3px;">
-                  <input class="cat-nombre-input" data-cat-id="{{ c.id }}" data-field="nombre" value="{{ c.nombre }}">
+                  <input class="cat-nombre-input" data-cat-id="{{ c.id }}" data-field="nombre" value="{{ c.nombre }}"
+                    {% if c.descripcion %}title="{{ c.descripcion }}"{% endif %}>
                   <button class="btn-eliminar-col" onclick="pedirEliminarCat({{ c.id }},'{{ c.nombre|escapejs }}')" title="Eliminar">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="10" height="10"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
@@ -69,19 +79,57 @@
         </thead>
         <tbody>
           {% for fila in datos %}
-          <tr data-row-idx="{{ forloop.counter0 }}">
+          <tr data-row-idx="{{ forloop.counter0 }}"
+              data-est-id="{{ fila.estudiante.id }}"
+              data-activo="{{ fila.estudiante.activo|yesno:'1,0' }}"
+              class="{% if not fila.estudiante.activo %}row-inactivo{% endif %}">
+
             <td class="td-estudiante">
-              <div class="td-est-inner" data-est-id="{{ fila.estudiante.id }}">
-                <div class="avatar"
+              <div class="td-est-inner">
+                <!-- Avatar -->
+                <div class="avatar{% if not fila.estudiante.activo %} avatar-inactivo{% endif %}"
                   onclick="abrirLightbox({{ fila.estudiante.id }},'{{ fila.estudiante.nombre|escapejs }}','{% if fila.estudiante.foto %}{{ fila.estudiante.foto.url }}{% endif %}','{{ csrf_token }}')"
                   title="Ver foto">
                   {% if fila.estudiante.foto %}<img src="{{ fila.estudiante.foto.url }}" alt="">{% else %}{{ fila.estudiante.iniciales }}{% endif %}
                 </div>
-                <span class="td-est-nombre">{{ fila.estudiante.nombre }}</span>
+
+                <!-- Nombre + badges -->
+                <div class="est-name-wrap">
+                  <span class="td-est-nombre{% if not fila.estudiante.activo %} nombre-inactivo{% endif %}">
+                    {{ fila.estudiante.nombre }}
+                  </span>
+                  {% if not fila.estudiante.activo %}
+                  <span class="badge-inactivo" title="{{ fila.estudiante.razon_inactivo|default:'Sin razón registrada' }}">Inactivo</span>
+                  {% endif %}
+                </div>
+
+                <!-- Botones de acción rápida -->
+                <div class="est-quick-btns">
+                  <!-- Estrella participativo -->
+                  <button class="btn-star {% if fila.estudiante.participativo %}star-active{% endif %}"
+                    data-est-id="{{ fila.estudiante.id }}"
+                    onclick="toggleParticipativo({{ fila.estudiante.id }}, this)"
+                    title="{% if fila.estudiante.participativo %}Quitar marca participativo{% else %}Marcar como participativo{% endif %}">
+                    {% if fila.estudiante.participativo %}⭐{% else %}☆{% endif %}
+                  </button>
+                  <!-- Botón inactivo -->
+                  <button class="btn-inactivo-toggle"
+                    data-est-id="{{ fila.estudiante.id }}"
+                    data-activo="{{ fila.estudiante.activo|yesno:'1,0' }}"
+                    onclick="toggleInactivo({{ fila.estudiante.id }}, {{ fila.estudiante.activo|yesno:'true,false' }}, '{{ fila.estudiante.razon_inactivo|escapejs }}', this)"
+                    title="{% if fila.estudiante.activo %}Marcar como inactivo{% else %}Reactivar estudiante{% endif %}">
+                    {% if fila.estudiante.activo %}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                    {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {% endif %}
+                  </button>
+                </div>
               </div>
             </td>
+
             {% for nota in fila.notas %}
-            <td class="td-nota {% if nota.valor is not None %}{{ nota.valor|color_nota }}{% endif %}"
+            <td class="td-nota {% if nota.valor is not None %}{{ nota.valor|color_nota }}{% endif %}{% if not fila.estudiante.activo %} td-bloqueada{% endif %}"
                 id="td-nota-{{ nota.id }}"
                 data-nota-id="{{ nota.id }}"
                 data-cat-id="{{ nota.categoria.id }}">
@@ -90,11 +138,13 @@
                   type="number" min="20" max="100"
                   {% if nota.valor is not None %}value="{{ nota.valor }}"{% endif %}
                   placeholder="—"
-                  data-nota-id="{{ nota.id }}">
+                  data-nota-id="{{ nota.id }}"
+                  {% if not fila.estudiante.activo %}disabled title="Estudiante inactivo — notas bloqueadas"{% endif %}>
               </div>
             </td>
             {% endfor %}
-            <td class="td-nota td-final" id="td-final-{{ forloop.counter0 }}">
+
+            <td class="td-nota td-final{% if not fila.estudiante.activo %} td-bloqueada{% endif %}" id="td-final-{{ forloop.counter0 }}">
               <div class="nota-input-wrap">
                 <span class="nota-final-val" id="final-{{ forloop.counter0 }}">—</span>
               </div>
@@ -125,9 +175,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="modal-body">
-      <p id="conf-msg" style="font-size:13px;line-height:1.6;"></p>
-    </div>
+    <div class="modal-body"><p id="conf-msg" style="font-size:13px;line-height:1.6;"></p></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="cerrarModal('modal-confirmar')">Cancelar</button>
       <button class="btn btn-danger" id="conf-ok">Sí, eliminar</button>
@@ -135,13 +183,100 @@
   </div>
 </div>
 
+<!-- Modal marcar inactivo -->
+<div class="modal-overlay" id="modal-inactivo">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="inactivo-title">Marcar como inactivo</div>
+        <div class="modal-subtitle" id="inactivo-nombre"></div>
+      </div>
+      <button class="btn-icon" onclick="cerrarModal('modal-inactivo')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="inactivo-razon-wrap">
+        <div class="form-group">
+          <label class="form-label">Razón de inactividad</label>
+          <textarea class="form-control" id="inactivo-razon" placeholder="Ej: Retiro voluntario, traslado a otro colegio..." style="min-height:80px;"></textarea>
+          <p style="font-size:11.5px;color:var(--text-muted);margin-top:6px;">Las notas de este estudiante quedarán bloqueadas y no aparecerá en la exportación Excel.</p>
+        </div>
+      </div>
+      <div id="reactivar-wrap" style="display:none;">
+        <p style="font-size:13.5px;color:var(--text);line-height:1.6;">¿Reactivar a este estudiante? Podrá volver a editar sus notas.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-inactivo')">Cancelar</button>
+      <button class="btn btn-danger" id="inactivo-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <style>
-/* Celda sin nota: fondo neutro */
-.nota-input::placeholder { color: #c4c9d8; font-size: 15px; letter-spacing: 1px; }
+/* ── Notas vacías ── */
+.nota-input::placeholder { color:#c4c9d8; font-size:15px; letter-spacing:1px; }
 .td-nota:not(.nota-bajo):not(.nota-basico):not(.nota-alto):not(.nota-superior) .nota-input {
-  background: var(--bg);
-  color: var(--text-muted);
+  background: var(--bg); color: var(--text-muted);
 }
+
+/* ── Fila inactiva ── */
+.row-inactivo { opacity: .7; }
+.row-inactivo .td-est-inner { opacity: 1; }
+.nombre-inactivo { text-decoration: line-through; color: var(--text-muted); }
+.avatar-inactivo { filter: grayscale(80%); border: 2px solid #fecaca; }
+.td-bloqueada { background: repeating-linear-gradient(45deg,#fafafa,#fafafa 4px,#f4f4f4 4px,#f4f4f4 8px) !important; }
+.td-bloqueada .nota-input { background: transparent !important; color: #c4c9d8 !important; cursor: not-allowed; }
+.badge-inactivo {
+  display: inline-flex; align-items: center; padding: 1px 6px;
+  background: #fff0f0; color: var(--nota-bajo-text);
+  border-radius: 4px; font-size: 10px; font-weight: 700;
+  margin-left: 4px; cursor: help;
+}
+
+/* ── Est name wrap ── */
+.est-name-wrap { flex: 1; min-width: 0; }
+.td-est-inner { display: flex; align-items: center; gap: 7px; }
+
+/* ── Botones rápidos en columna estudiante ── */
+.est-quick-btns {
+  display: flex; gap: 3px; flex-shrink: 0;
+  opacity: 0; transition: opacity .15s;
+}
+.td-estudiante:hover .est-quick-btns { opacity: 1; }
+
+.btn-star {
+  background: none; border: none; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 2px;
+  color: #c4c9d8; transition: color .15s, transform .15s;
+  border-radius: 4px;
+}
+.btn-star:hover, .btn-star.star-active { color: #f59e0b; transform: scale(1.2); }
+
+.btn-inactivo-toggle {
+  background: none; border: 1px solid transparent;
+  cursor: pointer; padding: 3px 4px; border-radius: 4px;
+  color: #c4c9d8; display: flex; align-items: center; transition: all .15s;
+}
+.btn-inactivo-toggle:hover { background: #fff0f0; border-color: #fecaca; color: var(--nota-bajo-text); }
+
+/* Tooltip inactivo flotante (al pasar sobre badge) */
+.badge-inactivo:hover::after {
+  content: attr(title);
+  position: absolute;
+  background: #1a1d27;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-top: 24px;
+  margin-left: -30px;
+  z-index: 100;
+  pointer-events: none;
+}
+.badge-inactivo { position: relative; }
 </style>
 
 <script>
@@ -149,154 +284,241 @@ const MATERIA_ID = parseInt("{{ materia.id }}", 10);
 const CSRF_TOKEN = '{{ csrf_token }}';
 const dot = document.getElementById('saving-dot');
 let saveTimer = null, catPendiente = null;
+let _inactivoEstId = null, _inactivoActivoActual = null, _inactivoBtnRef = null;
 
 function setSaving() { dot.classList.remove('saved'); dot.classList.add('saving'); }
-function setSaved()  { dot.classList.remove('saving'); dot.classList.add('saved'); setTimeout(() => dot.classList.remove('saved'), 2000); }
+function setSaved()  { dot.classList.remove('saving'); dot.classList.add('saved'); setTimeout(()=>dot.classList.remove('saved'),2000); }
 
 function colorClass(v) {
-  if (v <= 69) return 'nota-bajo';
-  if (v <= 79) return 'nota-basico';
-  if (v <= 89) return 'nota-alto';
-  return 'nota-superior';
+  if (v<=69) return 'nota-bajo'; if (v<=79) return 'nota-basico';
+  if (v<=89) return 'nota-alto'; return 'nota-superior';
 }
 
 function getPcts() {
-  const m = {};
-  document.querySelectorAll('.porcentaje-input').forEach(el => { m[el.dataset.catId] = parseInt(el.value) || 0; });
+  const m={};
+  document.querySelectorAll('.porcentaje-input').forEach(el=>{m[el.dataset.catId]=parseInt(el.value)||0;});
   return m;
 }
 
-/* ── Nota final ponderada — ignora vacíos ── */
 function recalcFinal(tr) {
-  const idx = tr.dataset.rowIdx, pcts = getPcts();
-  let suma = 0, tot = 0;
-  tr.querySelectorAll('td.td-nota:not(.td-final)').forEach(td => {
-    const inp = td.querySelector('.nota-input');
-    if (!inp || inp.value === '') return; // ignorar celdas vacías
-    const p = pcts[td.dataset.catId] || 0;
-    suma += parseInt(inp.value) * p;
-    tot  += p;
+  const idx=tr.dataset.rowIdx, pcts=getPcts();
+  let suma=0, tot=0;
+  tr.querySelectorAll('td.td-nota:not(.td-final)').forEach(td=>{
+    const inp=td.querySelector('.nota-input');
+    if (!inp || inp.value==='' || inp.disabled) return;
+    const p=pcts[td.dataset.catId]||0;
+    suma+=parseInt(inp.value)*p; tot+=p;
   });
-  const sp = document.getElementById('final-' + idx);
-  const tdF = document.getElementById('td-final-' + idx);
-  if (!tot) { sp.textContent = '—'; tdF.className = 'td-nota td-final'; return; }
-  const res = Math.round(suma / tot);
-  sp.textContent = res;
-  tdF.className = 'td-nota td-final ' + colorClass(res);
+  const sp=document.getElementById('final-'+idx);
+  const tdF=document.getElementById('td-final-'+idx);
+  if (!tot){sp.textContent='—';tdF.className='td-nota td-final'+(tr.classList.contains('row-inactivo')?' td-bloqueada':'');return;}
+  const res=Math.round(suma/tot);
+  sp.textContent=res;
+  tdF.className='td-nota td-final '+colorClass(res)+(tr.classList.contains('row-inactivo')?' td-bloqueada':'');
 }
-
-function recalcTodas() {
-  document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]').forEach(tr => recalcFinal(tr));
-}
+function recalcTodas(){ document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]').forEach(tr=>recalcFinal(tr)); }
 recalcTodas();
 
-/* ── Guardar nota ── */
 function guardarEnServidor(notaId, valor) {
   setSaving(); clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    fetch(`/nota/${notaId}/actualizar/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
-      body: JSON.stringify({ valor: valor }) // valor puede ser null o número
-    })
-    .then(r => r.json())
-    .then(d => { if (d.ok) setSaved(); else showToast('Error al guardar', false); })
-    .catch(() => showToast('Error de conexión', false));
-  }, 400);
+  saveTimer=setTimeout(()=>{
+    fetch(`/nota/${notaId}/actualizar/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+      body:JSON.stringify({valor})
+    }).then(r=>r.json()).then(d=>{if(d.ok)setSaved();else showToast('Error al guardar',false);})
+     .catch(()=>showToast('Error de conexión',false));
+  },400);
 }
 
 function procesarNota(inp) {
-  const notaId = inp.dataset.notaId;
-  const tdEl   = document.getElementById('td-nota-' + notaId);
-  const catId  = tdEl.dataset.catId;
-
-  // ── Campo borrado → guardar null, quitar color ──
-  if (inp.value === '') {
-    tdEl.className = 'td-nota';
-    tdEl.dataset.catId = catId;
+  if (inp.disabled) return;
+  const notaId=inp.dataset.notaId;
+  const tdEl=document.getElementById('td-nota-'+notaId);
+  const catId=tdEl.dataset.catId;
+  if (inp.value==='') {
+    tdEl.className='td-nota'; tdEl.dataset.catId=catId;
     recalcFinal(inp.closest('tr'));
-    guardarEnServidor(notaId, null);
-    return;
+    guardarEnServidor(notaId,null); return;
   }
-
-  // ── Valor inválido → tratar como borrado ──
-  let v = parseInt(inp.value);
-  if (isNaN(v)) { inp.value = ''; procesarNota(inp); return; }
-
-  // ── Clampear al rango 20-100 ──
-  v = Math.max(20, Math.min(100, v));
-  inp.value = v;
-
-  // ── Aplicar color inmediatamente ──
-  tdEl.className = 'td-nota ' + colorClass(v);
-  tdEl.dataset.catId = catId;
-
+  let v=parseInt(inp.value);
+  if (isNaN(v)){inp.value='';procesarNota(inp);return;}
+  v=Math.max(20,Math.min(100,v)); inp.value=v;
+  tdEl.className='td-nota '+colorClass(v); tdEl.dataset.catId=catId;
   recalcFinal(inp.closest('tr'));
-  guardarEnServidor(notaId, v);
+  guardarEnServidor(notaId,v);
 }
 
-document.querySelectorAll('.nota-input').forEach(inp => {
-  inp.addEventListener('change', function () { procesarNota(this); });
-  inp.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      procesarNota(this);
-      const all = Array.from(document.querySelectorAll('.nota-input'));
-      const i = all.indexOf(this);
-      if (i >= 0 && i + 1 < all.length) { all[i + 1].focus(); all[i + 1].select(); }
+document.querySelectorAll('.nota-input').forEach(inp=>{
+  inp.addEventListener('change',function(){procesarNota(this);});
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      e.preventDefault(); procesarNota(this);
+      const all=Array.from(document.querySelectorAll('.nota-input:not([disabled])'));
+      const i=all.indexOf(this);
+      if(i>=0&&i+1<all.length){all[i+1].focus();all[i+1].select();}
     }
   });
-  inp.addEventListener('focus', function () { this.select(); });
+  inp.addEventListener('focus',function(){if(!this.disabled)this.select();});
 });
 
-/* ── Porcentajes ── */
-let pctTimer = null;
-function recalcTotal() {
-  let t = 0;
-  document.querySelectorAll('.porcentaje-input').forEach(i => { t += parseInt(i.value) || 0; });
-  document.getElementById('pct-total-num').textContent = t;
-  const el = document.getElementById('pct-indicator');
-  el.className = 'pct-total ' + (t === 100 ? 'pct-ok' : t > 100 ? 'pct-error' : 'pct-warn');
+let pctTimer=null;
+function recalcTotal(){
+  let t=0; document.querySelectorAll('.porcentaje-input').forEach(i=>{t+=parseInt(i.value)||0;});
+  document.getElementById('pct-total-num').textContent=t;
+  const el=document.getElementById('pct-indicator');
+  el.className='pct-total '+(t===100?'pct-ok':t>100?'pct-error':'pct-warn');
   recalcTodas();
 }
-document.querySelectorAll('.cat-nombre-input, .porcentaje-input').forEach(inp => {
-  inp.addEventListener('change', function () {
-    const catId = this.dataset.catId, field = this.dataset.field;
-    const value = field === 'porcentaje' ? parseInt(this.value) || 0 : this.value.trim();
-    if (field === 'porcentaje') recalcTotal();
+document.querySelectorAll('.cat-nombre-input,.porcentaje-input').forEach(inp=>{
+  inp.addEventListener('change',function(){
+    const catId=this.dataset.catId,field=this.dataset.field;
+    const value=field==='porcentaje'?parseInt(this.value)||0:this.value.trim();
+    if(field==='porcentaje') recalcTotal();
     setSaving(); clearTimeout(pctTimer);
-    pctTimer = setTimeout(() => {
-      fetch(`/categoria/${catId}/actualizar/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
-        body: JSON.stringify({ [field]: value })
-      }).then(r => r.json()).then(d => { if (d.ok) setSaved(); });
-    }, 600);
+    pctTimer=setTimeout(()=>{
+      fetch(`/categoria/${catId}/actualizar/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},body:JSON.stringify({[field]:value})})
+      .then(r=>r.json()).then(d=>{if(d.ok)setSaved();});
+    },600);
   });
 });
 
-/* ── Eliminar columna ── */
-function pedirEliminarCat(catId, nombre) {
-  catPendiente = catId;
-  const hayDatos = Array.from(document.querySelectorAll(`td[data-cat-id="${catId}"] .nota-input`))
-    .some(i => i.value !== '');
-  document.getElementById('conf-sub').textContent = `"${nombre}"`;
-  document.getElementById('conf-msg').innerHTML = hayDatos
-    ? `<strong>Esta actividad tiene notas registradas.</strong><br>Se borrarán permanentemente todas las notas de <em>${nombre}</em>. ¿Continuar?`
-    : `¿Eliminar la actividad <em>${nombre}</em>? Esta acción no se puede deshacer.`;
-  document.getElementById('conf-ok').onclick = () => {
-    fetch(`/categoria/${catPendiente}/eliminar/`, { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN } })
-      .then(r => r.json()).then(d => {
-        if (d.ok) {
-          document.getElementById('th-cat-' + catPendiente)?.remove();
-          document.querySelectorAll(`td[data-cat-id="${catPendiente}"]`).forEach(td => td.remove());
-          recalcTodas(); recalcTotal();
-          cerrarModal('modal-confirmar');
-          showToast('Actividad eliminada');
-        } else showToast('Error', false);
-      });
+// ── Eliminar columna ──
+function pedirEliminarCat(catId,nombre){
+  catPendiente=catId;
+  const hayDatos=Array.from(document.querySelectorAll(`td[data-cat-id="${catId}"] .nota-input`)).some(i=>i.value!=='');
+  document.getElementById('conf-sub').textContent=`"${nombre}"`;
+  document.getElementById('conf-msg').innerHTML=hayDatos
+    ?`<strong>Esta actividad tiene notas registradas.</strong><br>Se borrarán permanentemente todas las notas de <em>${nombre}</em>. ¿Continuar?`
+    :`¿Eliminar la actividad <em>${nombre}</em>? Esta acción no se puede deshacer.`;
+  document.getElementById('conf-ok').onclick=()=>{
+    fetch(`/categoria/${catPendiente}/eliminar/`,{method:'POST',headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){
+        document.getElementById('th-cat-'+catPendiente)?.remove();
+        document.querySelectorAll(`td[data-cat-id="${catPendiente}"]`).forEach(td=>td.remove());
+        recalcTodas(); recalcTotal();
+        cerrarModal('modal-confirmar'); showToast('Actividad eliminada');
+      } else showToast('Error',false);
+    });
   };
   abrirModal('modal-confirmar');
+}
+
+// ── Participativo ──
+function toggleParticipativo(estId, btn) {
+  fetch(`/estudiante/${estId}/toggle-participativo/`,{method:'POST',headers:{'X-CSRFToken':CSRF_TOKEN}})
+  .then(r=>r.json()).then(d=>{
+    if(!d.ok){showToast('Error',false);return;}
+    if(d.participativo){
+      btn.textContent='⭐'; btn.classList.add('star-active');
+      btn.title='Quitar marca participativo';
+    } else {
+      btn.textContent='☆'; btn.classList.remove('star-active');
+      btn.title='Marcar como participativo';
+    }
+    showToast(d.participativo?'⭐ Marcado como participativo':'Marca removida');
+  }).catch(()=>showToast('Error',false));
+}
+
+// ── Inactivo / Reactivar ──
+function toggleInactivo(estId, activoActual, razonActual, btn) {
+  _inactivoEstId = estId;
+  _inactivoActivoActual = activoActual;
+  _inactivoBtnRef = btn;
+
+  // Obtener nombre del estudiante
+  const tr = btn.closest('tr');
+  const nombre = tr.querySelector('.td-est-nombre')?.textContent?.trim() || '';
+
+  document.getElementById('inactivo-nombre').textContent = nombre;
+
+  if (activoActual) {
+    // Marcar como inactivo
+    document.getElementById('inactivo-title').textContent = 'Marcar como inactivo';
+    document.getElementById('inactivo-razon').value = razonActual || '';
+    document.getElementById('inactivo-razon-wrap').style.display = '';
+    document.getElementById('reactivar-wrap').style.display = 'none';
+    document.getElementById('inactivo-ok').textContent = 'Marcar inactivo';
+    document.getElementById('inactivo-ok').className = 'btn btn-danger';
+  } else {
+    // Reactivar
+    document.getElementById('inactivo-title').textContent = 'Reactivar estudiante';
+    document.getElementById('inactivo-razon-wrap').style.display = 'none';
+    document.getElementById('reactivar-wrap').style.display = '';
+    document.getElementById('inactivo-ok').textContent = 'Reactivar';
+    document.getElementById('inactivo-ok').className = 'btn btn-success';
+  }
+
+  document.getElementById('inactivo-ok').onclick = confirmarToggleInactivo;
+  abrirModal('modal-inactivo');
+}
+
+function confirmarToggleInactivo() {
+  const nuevoActivo = !_inactivoActivoActual;
+  const razon = _inactivoActivoActual
+    ? (document.getElementById('inactivo-razon').value.trim())
+    : '';
+
+  fetch(`/estudiante/${_inactivoEstId}/toggle-activo/`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+    body:JSON.stringify({activo:nuevoActivo, razon})
+  }).then(r=>r.json()).then(d=>{
+    if(!d.ok){showToast('Error',false);return;}
+    cerrarModal('modal-inactivo');
+    // Actualizar UI sin recargar
+    const tr = document.querySelector(`tr[data-est-id="${_inactivoEstId}"]`);
+    if (!tr) { location.reload(); return; }
+
+    if (!d.activo) {
+      // Marcar como inactivo en el DOM
+      tr.classList.add('row-inactivo');
+      tr.dataset.activo = '0';
+      tr.querySelector('.td-est-nombre')?.classList.add('nombre-inactivo');
+      tr.querySelector('.avatar')?.classList.add('avatar-inactivo');
+
+      // Agregar badge inactivo si no existe
+      const nameWrap = tr.querySelector('.est-name-wrap');
+      if (nameWrap && !nameWrap.querySelector('.badge-inactivo')) {
+        const badge = document.createElement('span');
+        badge.className = 'badge-inactivo';
+        badge.title = d.razon || 'Sin razón registrada';
+        badge.textContent = 'Inactivo';
+        nameWrap.appendChild(badge);
+      }
+
+      // Bloquear inputs
+      tr.querySelectorAll('.nota-input').forEach(inp=>{inp.disabled=true;inp.title='Estudiante inactivo';});
+      tr.querySelectorAll('.td-nota').forEach(td=>{td.classList.add('td-bloqueada');});
+
+      // Cambiar botón
+      _inactivoBtnRef.dataset.activo='0';
+      _inactivoBtnRef.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      _inactivoBtnRef.title='Reactivar estudiante';
+      _inactivoBtnRef.setAttribute('onclick',`toggleInactivo(${_inactivoEstId},false,'${(d.razon||'').replace(/'/g,"\\'")}',this)`);
+
+      showToast('Estudiante marcado como inactivo');
+    } else {
+      // Reactivar en el DOM
+      tr.classList.remove('row-inactivo');
+      tr.dataset.activo='1';
+      tr.querySelector('.td-est-nombre')?.classList.remove('nombre-inactivo');
+      tr.querySelector('.avatar')?.classList.remove('avatar-inactivo');
+      tr.querySelector('.badge-inactivo')?.remove();
+
+      tr.querySelectorAll('.nota-input').forEach(inp=>{inp.disabled=false;inp.title='';});
+      tr.querySelectorAll('.td-nota').forEach(td=>{td.classList.remove('td-bloqueada');});
+
+      _inactivoBtnRef.dataset.activo='1';
+      _inactivoBtnRef.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>';
+      _inactivoBtnRef.title='Marcar como inactivo';
+      _inactivoBtnRef.setAttribute('onclick',`toggleInactivo(${_inactivoEstId},true,'',this)`);
+
+      showToast('✓ Estudiante reactivado');
+    }
+    recalcTodas();
+  }).catch(()=>showToast('Error de conexión',false));
 }
 </script>
 {% endblock %}
