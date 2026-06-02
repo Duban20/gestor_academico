@@ -481,6 +481,12 @@ function cerrarLightbox() {
   document.getElementById('lightbox').classList.remove('open');
   _lbEstId = null;
 }
+
+// Cerrar lightbox al clicar fuera de la foto
+document.getElementById('lightbox').addEventListener('click', function(e) {
+  // Si el clic fue directamente en el overlay (no en imagen, botón o label)
+  if (e.target === this) cerrarLightbox();
+});
 function subirFoto(input) {
   if (!input.files.length || !_lbEstId) return;
   const fd = new FormData();

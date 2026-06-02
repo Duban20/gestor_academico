@@ -45,6 +45,32 @@
   <span class="leyenda-item"><span style="font-size:12px;line-height:1;color:var(--nota-bajo-text);">●</span> Inactivo (bloqueado)</span>
 </div>
 
+<!-- Buscador de estudiante -->
+<div style="margin-bottom:12px; display:flex; align-items:center; gap:10px; max-width:340px;">
+  <div style="position:relative; flex:1;">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+         stroke="currentColor" width="14" height="14"
+         style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+    </svg>
+    <input
+      type="text"
+      id="buscador-estudiante"
+      placeholder="Buscar estudiante..."
+      autocomplete="off"
+      style="width:100%; padding:8px 12px 8px 32px; font-family:var(--font); font-size:13px;
+             border:1px solid var(--border); border-radius:var(--radius-sm);
+             background:var(--white); color:var(--text); outline:none; transition:border-color .15s;"
+      oninput="buscarEstudiante(this.value)"
+      onfocus="this.style.borderColor='var(--accent)'"
+      onblur="this.style.borderColor='var(--border)'"
+    >
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="limpiarBusqueda()" id="btn-limpiar-busqueda" style="display:none;">
+    ✕ Limpiar
+  </button>
+</div>
+
 <div class="card">
   <div class="card-body" style="padding:0;">
     <div class="table-scroll">
@@ -236,8 +262,27 @@
 }
 
 /* ── Est name wrap ── */
+.th-estudiante { width: 260px; }          /* columna más ancha */
+.td-estudiante { position: relative; }
 .est-name-wrap { flex: 1; min-width: 0; }
-.td-est-inner { display: flex; align-items: center; gap: 7px; }
+.td-est-nombre { display: block; font-size: 12.5px; line-height: 1.35; word-break: break-word; }
+.td-est-inner  { display: flex; align-items: center; gap: 8px; }
+
+/* Botones flotan sobre el borde derecho sin empujar el nombre */
+.est-quick-btns {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  display: flex; gap: 3px; flex-shrink: 0;
+  opacity: 0; transition: opacity .15s;
+  background: var(--white);
+  border-radius: 6px; padding: 2px 3px;
+  box-shadow: -6px 0 10px rgba(255,255,255,1);
+}
+.td-estudiante:hover .est-quick-btns { opacity: 1; }
+
+/* Resaltado del buscador */
+tr.fila-resaltada td { background: #fffbeb !important; transition: background .3s; }
+tr.fila-resaltada .td-estudiante { background: #fef9c3 !important; }
+tr.fila-resaltada .nota-input { border-color: #f59e0b !important; }
 
 /* ── Botones rápidos en columna estudiante ── */
 .est-quick-btns {
@@ -519,6 +564,50 @@ function confirmarToggleInactivo() {
     }
     recalcTodas();
   }).catch(()=>showToast('Error de conexión',false));
+}
+
+// ── Buscador de estudiante ──
+let _filaResaltada = null;
+
+function buscarEstudiante(q) {
+  const btnLimpiar = document.getElementById('btn-limpiar-busqueda');
+
+  // Quitar resaltado anterior
+  if (_filaResaltada) {
+    _filaResaltada.classList.remove('fila-resaltada');
+    _filaResaltada = null;
+  }
+
+  q = q.trim().toLowerCase();
+  if (!q) { btnLimpiar.style.display = 'none'; return; }
+  btnLimpiar.style.display = '';
+
+  // Buscar la primera fila que coincida
+  const filas = document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]');
+  let encontrada = null;
+  for (const tr of filas) {
+    const nombre = tr.querySelector('.td-est-nombre')?.textContent?.toLowerCase() || '';
+    if (nombre.includes(q)) { encontrada = tr; break; }
+  }
+
+  if (encontrada) {
+    encontrada.classList.add('fila-resaltada');
+    _filaResaltada = encontrada;
+    // Scroll suave hasta la fila
+    encontrada.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Enfocar el primer input de nota disponible de esa fila
+    // const primerInput = encontrada.querySelector('.nota-input:not([disabled])');
+    // if (primerInput) setTimeout(() => primerInput.focus(), 400);
+  }
+}
+
+function limpiarBusqueda() {
+  document.getElementById('buscador-estudiante').value = '';
+  document.getElementById('btn-limpiar-busqueda').style.display = 'none';
+  if (_filaResaltada) {
+    _filaResaltada.classList.remove('fila-resaltada');
+    _filaResaltada = null;
+  }
 }
 </script>
 {% endblock %}
