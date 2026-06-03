@@ -31,6 +31,34 @@
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
       Agregar actividad
     </a>
+
+    <div style="position:relative;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+           stroke="currentColor" width="14" height="14"
+           style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+      </svg>
+      <input
+        type="text"
+        id="buscador-estudiante"
+        placeholder="Buscar estudiante..."
+        autocomplete="off"
+        style="padding:8px 32px 8px 32px; font-family:var(--font); font-size:13px; width:200px;
+               border:1px solid var(--border); border-radius:var(--radius-sm);
+               background:var(--white); color:var(--text); outline:none; transition:border-color .15s, width .2s;"
+        oninput="buscarEstudiante(this.value)"
+        onfocus="this.style.borderColor='var(--accent)';this.style.width='240px'"
+        onblur="this.style.borderColor='var(--border)';if(!this.value)this.style.width='200px'"
+      >
+      <!-- X para limpiar, aparece dentro del input cuando hay texto -->
+      <button id="btn-limpiar-busqueda"
+        onclick="limpiarBusqueda()"
+        style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
+               background:none;border:none;cursor:pointer;color:var(--text-muted);
+               font-size:13px;line-height:1;padding:2px;"
+        title="Limpiar búsqueda">✕</button>
+    </div>
+
   </div>
 </div>
 
@@ -45,33 +73,7 @@
   <span class="leyenda-item"><span style="font-size:12px;line-height:1;color:var(--nota-bajo-text);">●</span> Inactivo (bloqueado)</span>
 </div>
 
-<!-- Buscador de estudiante -->
-<div style="margin-bottom:12px; display:flex; align-items:center; gap:10px; max-width:340px;">
-  <div style="position:relative; flex:1;">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-         stroke="currentColor" width="14" height="14"
-         style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-    </svg>
-    <input
-      type="text"
-      id="buscador-estudiante"
-      placeholder="Buscar estudiante..."
-      autocomplete="off"
-      style="width:100%; padding:8px 12px 8px 32px; font-family:var(--font); font-size:13px;
-             border:1px solid var(--border); border-radius:var(--radius-sm);
-             background:var(--white); color:var(--text); outline:none; transition:border-color .15s;"
-      oninput="buscarEstudiante(this.value)"
-      onfocus="this.style.borderColor='var(--accent)'"
-      onblur="this.style.borderColor='var(--border)'"
-    >
-  </div>
-  <button class="btn btn-outline btn-sm" onclick="limpiarBusqueda()" id="btn-limpiar-busqueda" style="display:none;">
-    ✕ Limpiar
-  </button>
-</div>
-
-<div class="card">
+<div class="card" style="overflow:hidden;">
   <div class="card-body" style="padding:0;">
     <div class="table-scroll">
       <table class="tabla-notas" id="tabla-notas">
@@ -97,8 +99,10 @@
             </th>
             {% endfor %}
             <th class="th-categoria th-final">
-              <div class="th-cat-inner" style="align-items:center;">
-                <span style="font-size:10.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;">Final</span>
+              <div class="th-cat-inner">
+                <span style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;
+                            font-weight:700;color:var(--accent);text-transform:uppercase;
+                            letter-spacing:.5px;height:80px;display:flex;align-items:center;">Final</span>
               </div>
             </th>
           </tr>
@@ -262,10 +266,95 @@
 }
 
 /* ── Est name wrap ── */
-.th-estudiante { width: 260px; }          /* columna más ancha */
+/* Columna estudiante fija y más estrecha */
+.th-estudiante { width: 210px; min-width: 210px; max-width: 210px; }
+.td-estudiante { width: 210px; min-width: 210px; max-width: 210px; }
+.td-est-nombre {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;      /* permite wrap */
+  word-break: break-word;
+  max-width: 155px;
+}
+
+/* Columnas de actividad: más estrechas con nombre vertical */
+.th-categoria  { min-width: 52px; width: 52px; max-width: 52px; }
+.th-final      { min-width: 52px; width: 52px; max-width: 52px; }
+
+.th-cat-inner {
+  padding: 10px 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Nombre de columna en vertical */
+.cat-nombre-input {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);          /* texto de abajo hacia arriba */
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-left: 1px dashed var(--border);  /* línea lateral en vez de inferior */
+  outline: none;
+  width: auto;
+  height: 80px;                       /* alto = largo del texto */
+  padding: 2px 1px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  cursor: pointer;
+  text-align: left;
+}
+.cat-nombre-input:focus {
+  border-left-color: var(--accent);
+  background: transparent;
+}
+
+/* Porcentaje debajo del nombre vertical */
+.porcentaje-row { flex-direction: column; align-items: center; gap: 1px; }
+.porcentaje-input {
+  width: 40px; font-size: 11px; padding: 2px 3px; text-align: center;
+}
+.porcentaje-label { font-size: 10px; }
+
+/* Botón eliminar: centrado debajo del porcentaje */
+.btn-eliminar-col {
+  width: 16px; height: 16px; margin-top: 2px;
+}
+
+/* Celda de nota más estrecha */
+.td-nota     { min-width: 52px; width: 52px; }
+.nota-input  { width: 44px; height: 34px; font-size: 13px; }
+.nota-final-val { min-width: 38px; font-size: 13px; padding: 3px 4px; }
+
 .td-estudiante { position: relative; }
 .est-name-wrap { flex: 1; min-width: 0; }
-.td-est-nombre { display: block; font-size: 12.5px; line-height: 1.35; word-break: break-word; }
+.th-estudiante,
+.td-estudiante {
+    min-width: 280px;
+    width: 280px;
+}
+
+.est-name-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.td-est-nombre {
+    display: block;
+    font-size: 12.5px;
+    line-height: 1.35;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: normal;
+}
 .td-est-inner  { display: flex; align-items: center; gap: 8px; }
 
 /* Botones flotan sobre el borde derecho sin empujar el nombre */
@@ -323,18 +412,70 @@ tr.fila-resaltada .nota-input { border-color: #f59e0b !important; }
 }
 .badge-inactivo { position: relative; }
 
-.th-categoria {
-  width: 50px;
-  min-width: 50px;
-  vertical-align: bottom;
+/* Thead pegado al tope al hacer scroll vertical */
+#tabla-notas thead tr th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background-color: #f8f9fd;
+  box-shadow: inset 0 -1px 0 var(--border), 0 2px 6px rgba(0,0,0,.07);
 }
 
-.cat-nombre-input {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  width: 24px;
-  height: 100px;
-  text-align: center;
+#tabla-notas thead tr th.th-estudiante {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  background-color: #f8f9fd;
+  box-shadow: inset 0 -1px 0 var(--border), 0 2px 6px rgba(0,0,0,.07);
+}
+
+/* La columna estudiante del tbody sigue pegada horizontalmente */
+.td-estudiante {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--white);
+}
+.row-inactivo .td-estudiante { background: #fafafa; }
+
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  border-radius: var(--radius);
+  -webkit-overflow-scrolling: touch;
+  position: relative;   /* ← clave para que sticky funcione dentro */
+}
+
+#tabla-notas {
+  border-collapse: separate;   /* ← CLAVE: collapse rompe sticky en algunos browsers */
+  border-spacing: 0;
+}
+
+/* Compensar bordes dobles de border-collapse:separate */
+#tabla-notas thead tr th {
+  border-bottom: 1px solid var(--border);
+}
+
+#tabla-notas tbody tr td {
+  border-top: none;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-left: none;
+}
+
+#tabla-notas tbody tr td:first-child {
+  border-left: 1px solid var(--border);
+}
+
+#tabla-notas thead tr th:first-child {
+  border-left: 1px solid var(--border);
+}
+
+/* Eliminar borde superior de la primera fila del tbody */
+#tabla-notas tbody tr:first-child td {
+  border-top: none;
 }
 </style>
 
