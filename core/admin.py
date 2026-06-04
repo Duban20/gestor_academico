@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from .models import Grado, Estudiante, Materia, CategoriaNota, Nota, Asistencia
 
 
@@ -59,23 +60,27 @@ class EstudianteAdmin(admin.ModelAdmin):
 
     def estado_badge(self, obj):
         if obj.activo:
-            return format_html(
+            return mark_safe(
                 '<span style="background:#f0fdf4;color:#15803d;padding:2px 8px;'
                 'border-radius:4px;font-size:11px;font-weight:600;">Activo</span>'
             )
+
         return format_html(
             '<span style="background:#fff0f0;color:#b91c1c;padding:2px 8px;'
             'border-radius:4px;font-size:11px;font-weight:600;" title="{}">'
             'Inactivo</span>',
             obj.razon_inactivo or "Sin razón registrada"
         )
-    estado_badge.short_description = "Estado"
 
     def participativo_badge(self, obj):
         if obj.participativo:
-            return format_html('<span style="color:#f59e0b;font-size:16px;">★</span>')
-        return format_html('<span style="color:#e5e7eb;font-size:16px;">☆</span>')
-    participativo_badge.short_description = "★"
+            return mark_safe(
+                '<span style="color:#f59e0b;font-size:16px;">★</span>'
+            )
+
+        return mark_safe(
+            '<span style="color:#e5e7eb;font-size:16px;">☆</span>'
+        )
 
 
 @admin.register(Materia)
