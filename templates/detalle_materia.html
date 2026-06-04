@@ -425,10 +425,9 @@ tr.fila-resaltada .td-estudiante { background: #fef9c3 !important; }
 .nota-movil-label {
   font-size: 13px; font-weight: 500; color: var(--text);
   display: flex; align-items: center; gap: 6px;
-  min-width: 0;           /* permite que el texto se recorte si es muy largo */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;     /* permite wrap si es necesario */
+  word-break: break-word;
 }
 .nota-movil-pct {
   font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);
