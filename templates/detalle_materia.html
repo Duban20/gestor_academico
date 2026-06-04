@@ -21,59 +21,41 @@
       <span id="pct-total-num">{{ total_porcentaje }}</span>%
     </div>
     <span class="saving-dot" id="saving-dot"></span>
-    <a href="{% url 'exportar_excel' materia.id %}?periodo={{ periodo_actual }}"
-       class="btn btn-success btn-sm"
-       title="Descargar Excel con las notas de este periodo">
+    <a href="{% url 'exportar_excel' materia.id %}?periodo={{ periodo_actual }}" class="btn btn-success btn-sm" title="Descargar Excel">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-      Descargar Excel
+      <span class="btn-label">Descargar Excel</span>
     </a>
     <a href="{% url 'agregar_categoria' materia.id %}?periodo={{ periodo_actual }}" class="btn btn-primary btn-sm">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-      Agregar actividad
+      <span class="btn-label">Agregar actividad</span>
     </a>
-
-    <div style="position:relative;">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-           stroke="currentColor" width="14" height="14"
-           style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
+    <!-- Buscador -->
+    <div class="buscador-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="14" height="14" class="buscador-icon">
         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
       </svg>
-      <input
-        type="text"
-        id="buscador-estudiante"
-        placeholder="Buscar estudiante..."
-        autocomplete="off"
-        style="padding:8px 32px 8px 32px; font-family:var(--font); font-size:13px; width:200px;
-               border:1px solid var(--border); border-radius:var(--radius-sm);
-               background:var(--white); color:var(--text); outline:none; transition:border-color .15s, width .2s;"
-        oninput="buscarEstudiante(this.value)"
-        onfocus="this.style.borderColor='var(--accent)';this.style.width='240px'"
-        onblur="this.style.borderColor='var(--border)';if(!this.value)this.style.width='200px'"
-      >
-      <!-- X para limpiar, aparece dentro del input cuando hay texto -->
-      <button id="btn-limpiar-busqueda"
-        onclick="limpiarBusqueda()"
-        style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
-               background:none;border:none;cursor:pointer;color:var(--text-muted);
-               font-size:13px;line-height:1;padding:2px;"
-        title="Limpiar búsqueda">✕</button>
+      <input type="text" id="buscador-estudiante" placeholder="Buscar..." autocomplete="off"
+        class="buscador-input" oninput="buscarEstudiante(this.value)">
+      <button id="btn-limpiar-busqueda" onclick="limpiarBusqueda()" class="buscador-clear" style="display:none;">✕</button>
     </div>
-
   </div>
 </div>
 
-<div class="leyenda" style="margin-bottom:16px;">
-  <span style="font-size:11px;color:var(--text-muted);font-weight:500;margin-right:4px;">Rangos:</span>
+<!-- Leyenda -->
+<div class="leyenda" style="margin-bottom:14px;flex-wrap:wrap;gap:6px 10px;">
+  <span style="font-size:11px;color:var(--text-muted);font-weight:500;">Rangos:</span>
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-bajo-text);"></span>20–69 Bajo</span>
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-basico-text);"></span>70–79 Básico</span>
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-alto-text);"></span>80–89 Alto</span>
   <span class="leyenda-item"><span class="leyenda-dot" style="background:var(--nota-superior-text);"></span>90–100 Superior</span>
-  <span style="width:1px;height:14px;background:var(--border);display:inline-block;margin:0 4px;"></span>
-  <span class="leyenda-item"><span style="font-size:13px;line-height:1;">⭐</span> Participativo</span>
-  <span class="leyenda-item"><span style="font-size:12px;line-height:1;color:var(--nota-bajo-text);">●</span> Inactivo (bloqueado)</span>
+  <span class="leyenda-item"><span style="font-size:13px;">⭐</span> Participativo</span>
+  <span class="leyenda-item"><span style="font-size:12px;color:var(--nota-bajo-text);">●</span> Inactivo</span>
 </div>
 
-<div class="card" style="overflow:hidden;">
+<!-- ════════════════════════════════
+     VISTA ESCRITORIO: tabla normal
+════════════════════════════════ -->
+<div class="card vista-escritorio" style="overflow:hidden;">
   <div class="card-body" style="padding:0;">
     <div class="table-scroll">
       <table class="tabla-notas" id="tabla-notas">
@@ -83,7 +65,7 @@
             {% for c in categorias %}
             <th class="th-categoria" id="th-cat-{{ c.id }}">
               <div class="th-cat-inner">
-                <div style="display:flex;align-items:center;gap:3px;">
+                <div style="display:flex;align-items:center;gap:3px;flex-direction:column;">
                   <input class="cat-nombre-input" data-cat-id="{{ c.id }}" data-field="nombre" value="{{ c.nombre }}"
                     {% if c.descripcion %}title="{{ c.descripcion }}"{% endif %}>
                   <button class="btn-eliminar-col" onclick="pedirEliminarCat({{ c.id }},'{{ c.nombre|escapejs }}')" title="Eliminar">
@@ -91,8 +73,7 @@
                   </button>
                 </div>
                 <div class="porcentaje-row">
-                  <input class="porcentaje-input" type="number" min="0" max="100"
-                    data-cat-id="{{ c.id }}" data-field="porcentaje" value="{{ c.porcentaje }}">
+                  <input class="porcentaje-input" type="number" min="0" max="100" data-cat-id="{{ c.id }}" data-field="porcentaje" value="{{ c.porcentaje }}">
                   <span class="porcentaje-label">%</span>
                 </div>
               </div>
@@ -100,54 +81,28 @@
             {% endfor %}
             <th class="th-categoria th-final">
               <div class="th-cat-inner">
-                <span style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;
-                            font-weight:700;color:var(--accent);text-transform:uppercase;
-                            letter-spacing:.5px;height:80px;display:flex;align-items:center;">Final</span>
+                <span style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;height:80px;display:flex;align-items:center;">Final</span>
               </div>
             </th>
           </tr>
         </thead>
         <tbody>
           {% for fila in datos %}
-          <tr data-row-idx="{{ forloop.counter0 }}"
-              data-est-id="{{ fila.estudiante.id }}"
-              data-activo="{{ fila.estudiante.activo|yesno:'1,0' }}"
+          <tr data-row-idx="{{ forloop.counter0 }}" data-est-id="{{ fila.estudiante.id }}"
               class="{% if not fila.estudiante.activo %}row-inactivo{% endif %}">
-
             <td class="td-estudiante">
               <div class="td-est-inner">
-                <!-- Avatar -->
                 <div class="avatar{% if not fila.estudiante.activo %} avatar-inactivo{% endif %}"
-                  onclick="abrirLightbox({{ fila.estudiante.id }},'{{ fila.estudiante.nombre|escapejs }}','{% if fila.estudiante.foto %}{{ fila.estudiante.foto.url }}{% endif %}','{{ csrf_token }}')"
-                  title="Ver foto">
+                  onclick="abrirLightbox({{ fila.estudiante.id }},'{{ fila.estudiante.nombre|escapejs }}','{% if fila.estudiante.foto %}{{ fila.estudiante.foto.url }}{% endif %}','{{ csrf_token }}')" title="Ver foto">
                   {% if fila.estudiante.foto %}<img src="{{ fila.estudiante.foto.url }}" alt="">{% else %}{{ fila.estudiante.iniciales }}{% endif %}
                 </div>
-
-                <!-- Nombre + badges -->
                 <div class="est-name-wrap">
-                  <span class="td-est-nombre{% if not fila.estudiante.activo %} nombre-inactivo{% endif %}">
-                    {{ fila.estudiante.nombre }}
-                  </span>
-                  {% if not fila.estudiante.activo %}
-                  <span class="badge-inactivo" title="{{ fila.estudiante.razon_inactivo|default:'Sin razón registrada' }}">Inactivo</span>
-                  {% endif %}
+                  <span class="td-est-nombre{% if not fila.estudiante.activo %} nombre-inactivo{% endif %}">{{ fila.estudiante.nombre }}</span>
+                  {% if not fila.estudiante.activo %}<span class="badge-inactivo" title="{{ fila.estudiante.razon_inactivo|default:'Sin razón registrada' }}">Inactivo</span>{% endif %}
                 </div>
-
-                <!-- Botones de acción rápida -->
                 <div class="est-quick-btns">
-                  <!-- Estrella participativo -->
-                  <button class="btn-star {% if fila.estudiante.participativo %}star-active{% endif %}"
-                    data-est-id="{{ fila.estudiante.id }}"
-                    onclick="toggleParticipativo({{ fila.estudiante.id }}, this)"
-                    title="{% if fila.estudiante.participativo %}Quitar marca participativo{% else %}Marcar como participativo{% endif %}">
-                    {% if fila.estudiante.participativo %}⭐{% else %}☆{% endif %}
-                  </button>
-                  <!-- Botón inactivo -->
-                  <button class="btn-inactivo-toggle"
-                    data-est-id="{{ fila.estudiante.id }}"
-                    data-activo="{{ fila.estudiante.activo|yesno:'1,0' }}"
-                    onclick="toggleInactivo({{ fila.estudiante.id }}, {{ fila.estudiante.activo|yesno:'true,false' }}, '{{ fila.estudiante.razon_inactivo|escapejs }}', this)"
-                    title="{% if fila.estudiante.activo %}Marcar como inactivo{% else %}Reactivar estudiante{% endif %}">
+                  <button class="btn-star {% if fila.estudiante.participativo %}star-active{% endif %}" onclick="toggleParticipativo({{ fila.estudiante.id }},this)" title="Participativo">{% if fila.estudiante.participativo %}⭐{% else %}☆{% endif %}</button>
+                  <button class="btn-inactivo-toggle" onclick="toggleInactivo({{ fila.estudiante.id }},{{ fila.estudiante.activo|yesno:'true,false' }},'{{ fila.estudiante.razon_inactivo|escapejs }}',this)" title="{% if fila.estudiante.activo %}Marcar inactivo{% else %}Reactivar{% endif %}">
                     {% if fila.estudiante.activo %}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                     {% else %}
@@ -157,35 +112,23 @@
                 </div>
               </div>
             </td>
-
             {% for nota in fila.notas %}
             <td class="td-nota {% if nota.valor is not None %}{{ nota.valor|color_nota }}{% endif %}{% if not fila.estudiante.activo %} td-bloqueada{% endif %}"
-                id="td-nota-{{ nota.id }}"
-                data-nota-id="{{ nota.id }}"
-                data-cat-id="{{ nota.categoria.id }}">
+                id="td-nota-{{ nota.id }}" data-nota-id="{{ nota.id }}" data-cat-id="{{ nota.categoria.id }}">
               <div class="nota-input-wrap">
-                <input class="nota-input"
-                  type="number" min="20" max="100"
+                <input class="nota-input" type="number" min="20" max="100"
                   {% if nota.valor is not None %}value="{{ nota.valor }}"{% endif %}
-                  placeholder="—"
-                  data-nota-id="{{ nota.id }}"
-                  {% if not fila.estudiante.activo %}disabled title="Estudiante inactivo — notas bloqueadas"{% endif %}>
+                  placeholder="—" data-nota-id="{{ nota.id }}"
+                  {% if not fila.estudiante.activo %}disabled{% endif %}>
               </div>
             </td>
             {% endfor %}
-
             <td class="td-nota td-final{% if not fila.estudiante.activo %} td-bloqueada{% endif %}" id="td-final-{{ forloop.counter0 }}">
-              <div class="nota-input-wrap">
-                <span class="nota-final-val" id="final-{{ forloop.counter0 }}">—</span>
-              </div>
+              <div class="nota-input-wrap"><span class="nota-final-val" id="final-{{ forloop.counter0 }}">—</span></div>
             </td>
           </tr>
           {% empty %}
-          <tr>
-            <td colspan="{{ categorias.count|add:2 }}" style="padding:40px;text-align:center;color:var(--text-muted);">
-              Sin estudiantes.
-            </td>
-          </tr>
+          <tr><td colspan="{{ categorias.count|add:2 }}" style="padding:40px;text-align:center;color:var(--text-muted);">Sin estudiantes.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -193,17 +136,87 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════
+     VISTA MÓVIL: tarjetas
+════════════════════════════════ -->
+<div class="vista-movil" id="vista-movil">
+  {% for fila in datos %}
+  <div class="card-est {% if not fila.estudiante.activo %}card-est-inactivo{% endif %}"
+       id="card-est-{{ fila.estudiante.id }}"
+       data-nombre="{{ fila.estudiante.nombre|lower }}">
+
+    <!-- Header de la tarjeta -->
+    <div class="card-est-header">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+        <div class="avatar{% if not fila.estudiante.activo %} avatar-inactivo{% endif %}"
+          onclick="abrirLightbox({{ fila.estudiante.id }},'{{ fila.estudiante.nombre|escapejs }}','{% if fila.estudiante.foto %}{{ fila.estudiante.foto.url }}{% endif %}','{{ csrf_token }}')"
+          style="width:40px;height:40px;font-size:14px;flex-shrink:0;">
+          {% if fila.estudiante.foto %}<img src="{{ fila.estudiante.foto.url }}" alt="">{% else %}{{ fila.estudiante.iniciales }}{% endif %}
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:13.5px;font-weight:700;line-height:1.3;{% if not fila.estudiante.activo %}text-decoration:line-through;color:var(--text-muted);{% endif %}">
+            {{ fila.estudiante.nombre }}
+          </div>
+          {% if not fila.estudiante.activo %}
+          <span class="badge-inactivo" style="margin-left:0;margin-top:3px;" title="{{ fila.estudiante.razon_inactivo|default:'Sin razón' }}">Inactivo</span>
+          {% endif %}
+        </div>
+      </div>
+      <!-- Acciones rápidas -->
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <button class="btn-star {% if fila.estudiante.participativo %}star-active{% endif %}"
+          onclick="toggleParticipativo({{ fila.estudiante.id }},this)"
+          style="font-size:18px;padding:4px;">{% if fila.estudiante.participativo %}⭐{% else %}☆{% endif %}</button>
+        <button class="btn-inactivo-toggle"
+          onclick="toggleInactivo({{ fila.estudiante.id }},{{ fila.estudiante.activo|yesno:'true,false' }},'{{ fila.estudiante.razon_inactivo|escapejs }}',this)"
+          style="padding:6px 8px;">
+          {% if fila.estudiante.activo %}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          {% else %}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          {% endif %}
+        </button>
+        <!-- Toggle expand/collapse -->
+        <button class="card-est-toggle" onclick="toggleCardEst(this)" title="Expandir">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Nota final siempre visible -->
+    <div class="card-est-final" id="movil-final-{{ fila.estudiante.id }}">
+      <span style="font-size:11px;color:var(--text-muted);">Final:</span>
+      <span class="nota-final-val movil-final-val" id="movil-final-val-{{ fila.estudiante.id }}">—</span>
+    </div>
+
+    <!-- Notas expandibles -->
+    <div class="card-est-notas" id="notas-est-{{ fila.estudiante.id }}">
+      {% for nota in fila.notas %}
+      <div class="nota-movil-row td-nota {% if nota.valor is not None %}{{ nota.valor|color_nota }}{% endif %}{% if not fila.estudiante.activo %} td-bloqueada{% endif %}"
+           id="movil-td-{{ nota.id }}" data-cat-id="{{ nota.categoria.id }}">
+        <div class="nota-movil-label">
+          {{ nota.categoria.nombre }}
+          <span class="nota-movil-pct">{{ nota.categoria.porcentaje }}%</span>
+        </div>
+        <input class="nota-input nota-input-movil" type="number" min="20" max="100"
+          {% if nota.valor is not None %}value="{{ nota.valor }}"{% endif %}
+          placeholder="—" data-nota-id="{{ nota.id }}"
+          data-est-id="{{ fila.estudiante.id }}"
+          {% if not fila.estudiante.activo %}disabled{% endif %}>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
 <!-- Modal confirmar eliminar columna -->
 <div class="modal-overlay" id="modal-confirmar">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div>
-        <div class="modal-title">Eliminar actividad</div>
-        <div class="modal-subtitle" id="conf-sub"></div>
-      </div>
-      <button class="btn-icon" onclick="cerrarModal('modal-confirmar')">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+      <div><div class="modal-title">Eliminar actividad</div><div class="modal-subtitle" id="conf-sub"></div></div>
+      <button class="btn-icon" onclick="cerrarModal('modal-confirmar')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body"><p id="conf-msg" style="font-size:13px;line-height:1.6;"></p></div>
     <div class="modal-footer">
@@ -213,28 +226,23 @@
   </div>
 </div>
 
-<!-- Modal marcar inactivo -->
+<!-- Modal inactivo -->
 <div class="modal-overlay" id="modal-inactivo">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div>
-        <div class="modal-title" id="inactivo-title">Marcar como inactivo</div>
-        <div class="modal-subtitle" id="inactivo-nombre"></div>
-      </div>
-      <button class="btn-icon" onclick="cerrarModal('modal-inactivo')">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+      <div><div class="modal-title" id="inactivo-title">Marcar como inactivo</div><div class="modal-subtitle" id="inactivo-nombre"></div></div>
+      <button class="btn-icon" onclick="cerrarModal('modal-inactivo')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div id="inactivo-razon-wrap">
         <div class="form-group">
           <label class="form-label">Razón de inactividad</label>
-          <textarea class="form-control" id="inactivo-razon" placeholder="Ej: Retiro voluntario, traslado a otro colegio..." style="min-height:80px;"></textarea>
-          <p style="font-size:11.5px;color:var(--text-muted);margin-top:6px;">Las notas de este estudiante quedarán bloqueadas y no aparecerá en la exportación Excel.</p>
+          <textarea class="form-control" id="inactivo-razon" placeholder="Ej: Retiro voluntario..." style="min-height:80px;"></textarea>
+          <p style="font-size:11.5px;color:var(--text-muted);margin-top:6px;">Las notas quedarán bloqueadas y no aparecerá en el Excel.</p>
         </div>
       </div>
       <div id="reactivar-wrap" style="display:none;">
-        <p style="font-size:13.5px;color:var(--text);line-height:1.6;">¿Reactivar a este estudiante? Podrá volver a editar sus notas.</p>
+        <p style="font-size:13.5px;line-height:1.6;">¿Reactivar a este estudiante?</p>
       </div>
     </div>
     <div class="modal-footer">
@@ -245,237 +253,216 @@
 </div>
 
 <style>
-/* ── Notas vacías ── */
-.nota-input::placeholder { color:#c4c9d8; font-size:15px; letter-spacing:1px; }
+/* ════════ BUSCADOR ════════ */
+.buscador-wrap {
+  position: relative; display: flex; align-items: center;
+}
+.buscador-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); pointer-events: none;
+}
+.buscador-input {
+  padding: 8px 28px 8px 32px;
+  font-family: var(--font); font-size: 13px; width: 180px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--white); color: var(--text); outline: none;
+  transition: border-color .15s, width .2s;
+}
+.buscador-input:focus { border-color: var(--accent); width: 220px; }
+.buscador-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--text-muted);
+  font-size: 13px; padding: 2px;
+}
+
+/* ════════ TABLA ESCRITORIO ════════ */
+.tabla-notas { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+#tabla-notas thead tr th {
+  position: sticky; top: 0; z-index: 3;
+  background-color: #f8f9fd;
+  box-shadow: inset 0 -1px 0 var(--border), 0 2px 6px rgba(0,0,0,.07);
+}
+#tabla-notas thead tr th.th-estudiante {
+  position: sticky; left: 0; top: 0; z-index: 4;
+  background-color: #f8f9fd;
+  box-shadow: inset 0 -1px 0 var(--border), 0 2px 6px rgba(0,0,0,.07);
+}
+#tabla-notas thead tr th { border-bottom: 1px solid var(--border); }
+#tabla-notas tbody tr td {
+  border-top: none; border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); border-left: none;
+}
+#tabla-notas tbody tr td:first-child { border-left: 1px solid var(--border); }
+#tabla-notas thead tr th:first-child { border-left: 1px solid var(--border); }
+#tabla-notas tbody tr:first-child td { border-top: none; }
+
+.table-scroll {
+  overflow-x: auto; overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  -webkit-overflow-scrolling: touch; position: relative;
+}
+
+.th-estudiante,
+.td-estudiante { width: 280px; min-width: 280px; max-width: 280px; }
+
+.td-estudiante {
+  position: sticky; left: 0; z-index: 1; background: var(--white);
+}
+.row-inactivo .td-estudiante { background: #fafafa; }
+
+.th-cat-inner { padding: 10px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cat-nombre-input {
+  writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+  font-family: var(--font); font-size: 11px; font-weight: 600;
+  background: transparent; border: none; border-left: 1px dashed var(--border);
+  outline: none; width: auto; height: 80px; padding: 2px 1px;
+  text-transform: uppercase; letter-spacing: .4px; cursor: pointer;
+}
+.cat-nombre-input:focus { border-left-color: var(--accent); }
+.th-categoria { min-width: 52px; width: 52px; max-width: 52px; }
+.th-final     { min-width: 52px; width: 52px; max-width: 52px; }
+.porcentaje-row { flex-direction: column; align-items: center; gap: 1px; }
+.porcentaje-input { width: 40px; font-size: 11px; padding: 2px 3px; text-align: center; }
+.porcentaje-label { font-size: 10px; }
+.btn-eliminar-col { width: 16px; height: 16px; margin-top: 2px; }
+.td-nota { min-width: 52px; width: 52px; text-align: center; }
+.nota-input { width: 44px; height: 34px; font-size: 13px; }
+.nota-final-val { min-width: 38px; font-size: 13px; padding: 3px 4px; }
+.nota-input::placeholder { color: #c4c9d8; font-size: 15px; letter-spacing: 1px; }
 .td-nota:not(.nota-bajo):not(.nota-basico):not(.nota-alto):not(.nota-superior) .nota-input {
   background: var(--bg); color: var(--text-muted);
 }
 
-/* ── Fila inactiva ── */
-.row-inactivo { opacity: .7; }
-.row-inactivo .td-est-inner { opacity: 1; }
-.nombre-inactivo { text-decoration: line-through; color: var(--text-muted); }
-.avatar-inactivo { filter: grayscale(80%); border: 2px solid #fecaca; }
-.td-bloqueada { background: repeating-linear-gradient(45deg,#fafafa,#fafafa 4px,#f4f4f4 4px,#f4f4f4 8px) !important; }
-.td-bloqueada .nota-input { background: transparent !important; color: #c4c9d8 !important; cursor: not-allowed; }
-.badge-inactivo {
-  display: inline-flex; align-items: center; padding: 1px 6px;
-  background: #fff0f0; color: var(--nota-bajo-text);
-  border-radius: 4px; font-size: 10px; font-weight: 700;
-  margin-left: 4px; cursor: help;
-}
-
-/* ── Est name wrap ── */
-/* Columna estudiante fija y más estrecha */
-.th-estudiante { width: 210px; min-width: 210px; max-width: 210px; }
-.td-estudiante { width: 210px; min-width: 210px; max-width: 210px; }
-.td-est-nombre {
-  display: block;
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: normal;      /* permite wrap */
-  word-break: break-word;
-  max-width: 155px;
-}
-
-/* Columnas de actividad: más estrechas con nombre vertical */
-.th-categoria  { min-width: 52px; width: 52px; max-width: 52px; }
-.th-final      { min-width: 52px; width: 52px; max-width: 52px; }
-
-.th-cat-inner {
-  padding: 10px 4px 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Nombre de columna en vertical */
-.cat-nombre-input {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);          /* texto de abajo hacia arriba */
-  font-family: var(--font);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text);
-  background: transparent;
-  border: none;
-  border-left: 1px dashed var(--border);  /* línea lateral en vez de inferior */
-  outline: none;
-  width: auto;
-  height: 80px;                       /* alto = largo del texto */
-  padding: 2px 1px;
-  text-transform: uppercase;
-  letter-spacing: .4px;
-  cursor: pointer;
-  text-align: left;
-}
-.cat-nombre-input:focus {
-  border-left-color: var(--accent);
-  background: transparent;
-}
-
-/* Porcentaje debajo del nombre vertical */
-.porcentaje-row { flex-direction: column; align-items: center; gap: 1px; }
-.porcentaje-input {
-  width: 40px; font-size: 11px; padding: 2px 3px; text-align: center;
-}
-.porcentaje-label { font-size: 10px; }
-
-/* Botón eliminar: centrado debajo del porcentaje */
-.btn-eliminar-col {
-  width: 16px; height: 16px; margin-top: 2px;
-}
-
-/* Celda de nota más estrecha */
-.td-nota     { min-width: 52px; width: 52px; }
-.nota-input  { width: 44px; height: 34px; font-size: 13px; }
-.nota-final-val { min-width: 38px; font-size: 13px; padding: 3px 4px; }
-
-.td-estudiante { position: relative; }
+/* Columna estudiante escritorio */
+.td-est-inner { display: flex; align-items: center; gap: 8px; position: relative; }
 .est-name-wrap { flex: 1; min-width: 0; }
-.th-estudiante,
-.td-estudiante {
-    min-width: 280px;
-    width: 280px;
-}
-
-.est-name-wrap {
-    flex: 1;
-    min-width: 0;
-}
-
-.td-est-nombre {
-    display: block;
-    font-size: 12.5px;
-    line-height: 1.35;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    word-break: normal;
-}
-.td-est-inner  { display: flex; align-items: center; gap: 8px; }
-
-/* Botones flotan sobre el borde derecho sin empujar el nombre */
+.td-est-nombre { display: block; font-size: 12.5px; line-height: 1.35; white-space: normal; word-break: break-word; }
 .est-quick-btns {
   position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
-  display: flex; gap: 3px; flex-shrink: 0;
-  opacity: 0; transition: opacity .15s;
-  background: var(--white);
-  border-radius: 6px; padding: 2px 3px;
+  display: flex; gap: 3px; opacity: 0; transition: opacity .15s;
+  background: var(--white); border-radius: 6px; padding: 2px 3px;
   box-shadow: -6px 0 10px rgba(255,255,255,1);
 }
 .td-estudiante:hover .est-quick-btns { opacity: 1; }
 
-/* Resaltado del buscador */
-tr.fila-resaltada td { background: #fffbeb !important; transition: background .3s; }
-tr.fila-resaltada .td-estudiante { background: #fef9c3 !important; }
-tr.fila-resaltada .nota-input { border-color: #f59e0b !important; }
-
-/* ── Botones rápidos en columna estudiante ── */
-.est-quick-btns {
-  display: flex; gap: 3px; flex-shrink: 0;
-  opacity: 0; transition: opacity .15s;
+/* ════════ ESTADOS COMUNES ════════ */
+.row-inactivo { opacity: .75; }
+.nombre-inactivo { text-decoration: line-through; color: var(--text-muted); }
+.avatar-inactivo { filter: grayscale(80%); border: 2px solid #fecaca; }
+.td-bloqueada { background: repeating-linear-gradient(45deg,#fafafa,#fafafa 4px,#f4f4f4 4px,#f4f4f4 8px) !important; }
+.td-bloqueada .nota-input,
+.td-bloqueada .nota-input-movil { background: transparent !important; color: #c4c9d8 !important; cursor: not-allowed; }
+.badge-inactivo {
+  display: inline-flex; align-items: center; padding: 1px 6px;
+  background: #fff0f0; color: var(--nota-bajo-text);
+  border-radius: 4px; font-size: 10px; font-weight: 700;
+  margin-left: 4px; cursor: help; position: relative;
 }
-.td-estudiante:hover .est-quick-btns { opacity: 1; }
-
-.btn-star {
-  background: none; border: none; cursor: pointer;
-  font-size: 15px; line-height: 1; padding: 2px;
-  color: #c4c9d8; transition: color .15s, transform .15s;
-  border-radius: 4px;
-}
-.btn-star:hover, .btn-star.star-active { color: #f59e0b; transform: scale(1.2); }
-
-.btn-inactivo-toggle {
-  background: none; border: 1px solid transparent;
-  cursor: pointer; padding: 3px 4px; border-radius: 4px;
-  color: #c4c9d8; display: flex; align-items: center; transition: all .15s;
-}
+.btn-star { background: none; border: none; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px; color: #c4c9d8; transition: color .15s, transform .15s; border-radius: 4px; }
+.btn-star:hover, .btn-star.star-active { color: #f59e0b; transform: scale(1.15); }
+.btn-inactivo-toggle { background: none; border: 1px solid transparent; cursor: pointer; padding: 3px 4px; border-radius: 4px; color: #c4c9d8; display: flex; align-items: center; transition: all .15s; }
 .btn-inactivo-toggle:hover { background: #fff0f0; border-color: #fecaca; color: var(--nota-bajo-text); }
 
-/* Tooltip inactivo flotante (al pasar sobre badge) */
-.badge-inactivo:hover::after {
-  content: attr(title);
-  position: absolute;
-  background: #1a1d27;
-  color: #fff;
-  padding: 5px 10px;
-  border-radius: 7px;
-  font-size: 12px;
-  white-space: nowrap;
-  margin-top: 24px;
-  margin-left: -30px;
-  z-index: 100;
-  pointer-events: none;
-}
-.badge-inactivo { position: relative; }
+/* Resaltado buscador */
+tr.fila-resaltada td { background: #fffbeb !important; }
+tr.fila-resaltada .td-estudiante { background: #fef9c3 !important; }
+.card-est-resaltada { border-color: #f59e0b !important; box-shadow: 0 0 0 2px #fde68a !important; }
 
-/* Thead pegado al tope al hacer scroll vertical */
-#tabla-notas thead tr th {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background-color: #f8f9fd;
-  box-shadow: inset 0 -1px 0 var(--border), 0 2px 6px rgba(0,0,0,.07);
+/* ════════ VISTA MÓVIL: TARJETAS ════════ */
+.vista-movil { display: none; flex-direction: column; gap: 10px; }
+
+.card-est {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  box-shadow: var(--shadow); transition: border-color .15s;
+}
+.card-est-inactivo { opacity: .75; border-color: #fecaca; }
+
+.card-est-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #f8f9fd;
 }
 
-#tabla-notas thead tr th.th-estudiante {
-  position: sticky;
-  left: 0;
-  top: 0;
-  z-index: 4;
-  background-color: #f8f9fd;
-  box-shadow: inset 0 -1px 0 var(--border), 0 2px 6px rgba(0,0,0,.07);
-}
-
-/* La columna estudiante del tbody sigue pegada horizontalmente */
-.td-estudiante {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--white);
-}
-.row-inactivo .td-estudiante { background: #fafafa; }
-
-.table-scroll {
-  overflow-x: auto;
-  overflow-y: auto;
-  max-height: calc(100vh - 220px);
-  border-radius: var(--radius);
-  -webkit-overflow-scrolling: touch;
-  position: relative;   /* ← clave para que sticky funcione dentro */
-}
-
-#tabla-notas {
-  border-collapse: separate;   /* ← CLAVE: collapse rompe sticky en algunos browsers */
-  border-spacing: 0;
-}
-
-/* Compensar bordes dobles de border-collapse:separate */
-#tabla-notas thead tr th {
+.card-est-final {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; font-size: 12.5px;
   border-bottom: 1px solid var(--border);
 }
 
-#tabla-notas tbody tr td {
-  border-top: none;
-  border-right: 1px solid var(--border);
+.movil-final-val {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+  padding: 3px 10px; border-radius: 8px; min-width: 50px; text-align: center;
+}
+
+.card-est-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; padding: 5px 7px; color: var(--text-muted);
+  display: flex; align-items: center; transition: background .15s, transform .2s;
+}
+.card-est-toggle.expanded { transform: rotate(180deg); }
+.card-est-toggle:hover { background: var(--bg); }
+
+.card-est-notas {
+  display: none; /* colapsado por defecto */
+  flex-direction: column; padding: 8px 0;
+}
+.card-est-notas.open { display: flex; }
+
+.nota-movil-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; gap: 10px;
   border-bottom: 1px solid var(--border);
-  border-left: none;
+  transition: background .15s;
+}
+.nota-movil-row:last-child { border-bottom: none; }
+
+.nota-movil-label {
+  font-size: 13px; font-weight: 500; color: var(--text);
+  display: flex; align-items: center; gap: 6px; flex: 1;
+}
+.nota-movil-pct {
+  font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);
+  background: var(--bg); padding: 1px 6px; border-radius: 4px;
 }
 
-#tabla-notas tbody tr td:first-child {
-  border-left: 1px solid var(--border);
+.nota-input-movil {
+  font-family: var(--font-mono); font-size: 18px; font-weight: 600;
+  text-align: center; width: 72px; height: 44px;
+  border: 2px solid var(--border); border-radius: 10px; outline: none;
+  -moz-appearance: textfield; appearance: textfield;
+  transition: border-color .15s, background .15s;
+}
+.nota-input-movil::-webkit-outer-spin-button,
+.nota-input-movil::-webkit-inner-spin-button { -webkit-appearance: none; }
+.nota-input-movil:focus { border-color: var(--accent); }
+.nota-input-movil::placeholder { color: #c4c9d8; font-size: 18px; }
+
+/* Colores en filas de tarjeta móvil */
+.nota-movil-row.nota-bajo     { background: var(--nota-bajo-bg); }
+.nota-movil-row.nota-basico   { background: var(--nota-basico-bg); }
+.nota-movil-row.nota-alto     { background: var(--nota-alto-bg); }
+.nota-movil-row.nota-superior { background: var(--nota-superior-bg); }
+.nota-movil-row.nota-bajo     .nota-input-movil { background: var(--nota-bajo-bg);     color: var(--nota-bajo-text);     border-color: var(--nota-bajo-text); }
+.nota-movil-row.nota-basico   .nota-input-movil { background: var(--nota-basico-bg);   color: var(--nota-basico-text);   border-color: var(--nota-basico-text); }
+.nota-movil-row.nota-alto     .nota-input-movil { background: var(--nota-alto-bg);     color: var(--nota-alto-text);     border-color: var(--nota-alto-text); }
+.nota-movil-row.nota-superior .nota-input-movil { background: var(--nota-superior-bg); color: var(--nota-superior-text); border-color: var(--nota-superior-text); }
+
+/* ════════ RESPONSIVE BREAKPOINTS ════════ */
+@media (max-width: 768px) {
+  .vista-escritorio { display: none !important; }
+  .vista-movil { display: flex; }
+  .buscador-input { width: 140px; }
+  .buscador-input:focus { width: 160px; }
+  .btn-label { display: none; } /* ocultar texto en botones, solo icono */
+  .btn-sm { padding: 8px 10px; }
 }
 
-#tabla-notas thead tr th:first-child {
-  border-left: 1px solid var(--border);
-}
-
-/* Eliminar borde superior de la primera fila del tbody */
-#tabla-notas tbody tr:first-child td {
-  border-top: none;
+@media (min-width: 769px) {
+  .vista-movil { display: none !important; }
+  .vista-escritorio { display: block; }
 }
 </style>
 
@@ -494,13 +481,14 @@ function colorClass(v) {
   if (v<=89) return 'nota-alto'; return 'nota-superior';
 }
 
+/* ════════ NOTA FINAL ════════ */
 function getPcts() {
   const m={};
   document.querySelectorAll('.porcentaje-input').forEach(el=>{m[el.dataset.catId]=parseInt(el.value)||0;});
   return m;
 }
 
-function recalcFinal(tr) {
+function recalcFinalEscritorio(tr) {
   const idx=tr.dataset.rowIdx, pcts=getPcts();
   let suma=0, tot=0;
   tr.querySelectorAll('td.td-nota:not(.td-final)').forEach(td=>{
@@ -516,21 +504,46 @@ function recalcFinal(tr) {
   sp.textContent=res;
   tdF.className='td-nota td-final '+colorClass(res)+(tr.classList.contains('row-inactivo')?' td-bloqueada':'');
 }
-function recalcTodas(){ document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]').forEach(tr=>recalcFinal(tr)); }
+
+function recalcFinalMovil(estId) {
+  const pcts=getPcts();
+  let suma=0, tot=0;
+  document.querySelectorAll(`#notas-est-${estId} .nota-movil-row`).forEach(row=>{
+    const inp=row.querySelector('.nota-input-movil');
+    if (!inp || inp.value==='' || inp.disabled) return;
+    const p=pcts[row.dataset.catId]||0;
+    suma+=parseInt(inp.value)*p; tot+=p;
+  });
+  const sp=document.getElementById('movil-final-val-'+estId);
+  const finalDiv=document.getElementById('movil-final-'+estId);
+  if (!tot){sp.textContent='—';sp.className='nota-final-val movil-final-val';finalDiv.style.background='';return;}
+  const res=Math.round(suma/tot);
+  sp.textContent=res;
+  const cls=colorClass(res);
+  sp.className='nota-final-val movil-final-val';
+  sp.style.background = `var(--${cls}-bg)`;
+  sp.style.color = `var(--${cls}-text)`;
+}
+
+function recalcTodas() {
+  document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]').forEach(tr=>recalcFinalEscritorio(tr));
+  {% for fila in datos %}recalcFinalMovil({{ fila.estudiante.id }});{% endfor %}
+}
 recalcTodas();
 
+/* ════════ GUARDAR NOTA ════════ */
 function guardarEnServidor(notaId, valor) {
   setSaving(); clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
     fetch(`/nota/${notaId}/actualizar/`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+      method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
       body:JSON.stringify({valor})
     }).then(r=>r.json()).then(d=>{if(d.ok)setSaved();else showToast('Error al guardar',false);})
      .catch(()=>showToast('Error de conexión',false));
   },400);
 }
 
+/* Procesar nota escritorio */
 function procesarNota(inp) {
   if (inp.disabled) return;
   const notaId=inp.dataset.notaId;
@@ -538,14 +551,52 @@ function procesarNota(inp) {
   const catId=tdEl.dataset.catId;
   if (inp.value==='') {
     tdEl.className='td-nota'; tdEl.dataset.catId=catId;
-    recalcFinal(inp.closest('tr'));
+    recalcFinalEscritorio(inp.closest('tr'));
     guardarEnServidor(notaId,null); return;
   }
-  let v=parseInt(inp.value);
-  if (isNaN(v)){inp.value='';procesarNota(inp);return;}
+  let v=parseInt(inp.value); if (isNaN(v)){inp.value='';procesarNota(inp);return;}
   v=Math.max(20,Math.min(100,v)); inp.value=v;
   tdEl.className='td-nota '+colorClass(v); tdEl.dataset.catId=catId;
-  recalcFinal(inp.closest('tr'));
+  recalcFinalEscritorio(inp.closest('tr'));
+  // Sincronizar con móvil
+  const movilRow=document.getElementById('movil-td-'+notaId);
+  if (movilRow) {
+    const movilInp=movilRow.querySelector('.nota-input-movil');
+    if (movilInp) movilInp.value=v;
+    movilRow.className=`nota-movil-row ${colorClass(v)}`;
+    movilRow.dataset.catId=catId;
+    recalcFinalMovil(inp.closest('tr').dataset.estId);
+  }
+  guardarEnServidor(notaId,v);
+}
+
+/* Procesar nota móvil */
+function procesarNotaMovil(inp) {
+  if (inp.disabled) return;
+  const notaId=inp.dataset.notaId;
+  const estId=inp.dataset.estId;
+  const row=inp.closest('.nota-movil-row');
+  const catId=row.dataset.catId;
+  if (inp.value==='') {
+    row.className='nota-movil-row'; row.dataset.catId=catId;
+    recalcFinalMovil(estId);
+    // Sincronizar con escritorio
+    const deskTd=document.getElementById('td-nota-'+notaId);
+    if (deskTd){deskTd.className='td-nota';deskTd.dataset.catId=catId;const di=deskTd.querySelector('.nota-input');if(di)di.value='';}
+    guardarEnServidor(notaId,null); return;
+  }
+  let v=parseInt(inp.value); if(isNaN(v)){inp.value='';procesarNotaMovil(inp);return;}
+  v=Math.max(20,Math.min(100,v)); inp.value=v;
+  row.className=`nota-movil-row ${colorClass(v)}`; row.dataset.catId=catId;
+  recalcFinalMovil(estId);
+  // Sincronizar con escritorio
+  const deskTd=document.getElementById('td-nota-'+notaId);
+  if (deskTd){
+    deskTd.className='td-nota '+colorClass(v); deskTd.dataset.catId=catId;
+    const di=deskTd.querySelector('.nota-input'); if(di)di.value=v;
+    const tr=document.querySelector(`tr[data-est-id="${estId}"]`);
+    if(tr)recalcFinalEscritorio(tr);
+  }
   guardarEnServidor(notaId,v);
 }
 
@@ -555,13 +606,21 @@ document.querySelectorAll('.nota-input').forEach(inp=>{
     if(e.key==='Enter'){
       e.preventDefault(); procesarNota(this);
       const all=Array.from(document.querySelectorAll('.nota-input:not([disabled])'));
-      const i=all.indexOf(this);
-      if(i>=0&&i+1<all.length){all[i+1].focus();all[i+1].select();}
+      const i=all.indexOf(this); if(i>=0&&i+1<all.length){all[i+1].focus();all[i+1].select();}
     }
   });
   inp.addEventListener('focus',function(){if(!this.disabled)this.select();});
 });
 
+document.querySelectorAll('.nota-input-movil').forEach(inp=>{
+  inp.addEventListener('change',function(){procesarNotaMovil(this);});
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();procesarNotaMovil(this);}
+  });
+  inp.addEventListener('focus',function(){if(!this.disabled)this.select();});
+});
+
+/* ════════ PORCENTAJES ════════ */
 let pctTimer=null;
 function recalcTotal(){
   let t=0; document.querySelectorAll('.porcentaje-input').forEach(i=>{t+=parseInt(i.value)||0;});
@@ -583,20 +642,21 @@ document.querySelectorAll('.cat-nombre-input,.porcentaje-input').forEach(inp=>{
   });
 });
 
-// ── Eliminar columna ──
+/* ════════ ELIMINAR COLUMNA ════════ */
 function pedirEliminarCat(catId,nombre){
   catPendiente=catId;
   const hayDatos=Array.from(document.querySelectorAll(`td[data-cat-id="${catId}"] .nota-input`)).some(i=>i.value!=='');
   document.getElementById('conf-sub').textContent=`"${nombre}"`;
   document.getElementById('conf-msg').innerHTML=hayDatos
-    ?`<strong>Esta actividad tiene notas registradas.</strong><br>Se borrarán permanentemente todas las notas de <em>${nombre}</em>. ¿Continuar?`
-    :`¿Eliminar la actividad <em>${nombre}</em>? Esta acción no se puede deshacer.`;
+    ?`<strong>Esta actividad tiene notas registradas.</strong><br>Se borrarán todas las notas de <em>${nombre}</em>. ¿Continuar?`
+    :`¿Eliminar la actividad <em>${nombre}</em>?`;
   document.getElementById('conf-ok').onclick=()=>{
     fetch(`/categoria/${catPendiente}/eliminar/`,{method:'POST',headers:{'X-CSRFToken':CSRF_TOKEN}})
     .then(r=>r.json()).then(d=>{
       if(d.ok){
         document.getElementById('th-cat-'+catPendiente)?.remove();
         document.querySelectorAll(`td[data-cat-id="${catPendiente}"]`).forEach(td=>td.remove());
+        document.querySelectorAll(`.nota-movil-row[data-cat-id="${catPendiente}"]`).forEach(r=>r.remove());
         recalcTodas(); recalcTotal();
         cerrarModal('modal-confirmar'); showToast('Actividad eliminada');
       } else showToast('Error',false);
@@ -605,164 +665,148 @@ function pedirEliminarCat(catId,nombre){
   abrirModal('modal-confirmar');
 }
 
-// ── Participativo ──
+/* ════════ EXPAND/COLLAPSE TARJETA ════════ */
+function toggleCardEst(btn) {
+  const card=btn.closest('.card-est');
+  const notas=card.querySelector('.card-est-notas');
+  const isOpen=notas.classList.contains('open');
+  notas.classList.toggle('open',!isOpen);
+  btn.classList.toggle('expanded',!isOpen);
+}
+
+/* ════════ PARTICIPATIVO ════════ */
 function toggleParticipativo(estId, btn) {
   fetch(`/estudiante/${estId}/toggle-participativo/`,{method:'POST',headers:{'X-CSRFToken':CSRF_TOKEN}})
   .then(r=>r.json()).then(d=>{
     if(!d.ok){showToast('Error',false);return;}
-    if(d.participativo){
-      btn.textContent='⭐'; btn.classList.add('star-active');
-      btn.title='Quitar marca participativo';
-    } else {
-      btn.textContent='☆'; btn.classList.remove('star-active');
-      btn.title='Marcar como participativo';
-    }
+    // Actualizar todos los botones de este estudiante (escritorio + móvil)
+    document.querySelectorAll(`[onclick*="toggleParticipativo(${estId}"]`).forEach(b=>{
+      if(d.participativo){b.textContent='⭐';b.classList.add('star-active');}
+      else{b.textContent='☆';b.classList.remove('star-active');}
+    });
     showToast(d.participativo?'⭐ Marcado como participativo':'Marca removida');
   }).catch(()=>showToast('Error',false));
 }
 
-// ── Inactivo / Reactivar ──
+/* ════════ INACTIVO ════════ */
 function toggleInactivo(estId, activoActual, razonActual, btn) {
-  _inactivoEstId = estId;
-  _inactivoActivoActual = activoActual;
-  _inactivoBtnRef = btn;
-
-  // Obtener nombre del estudiante
-  const tr = btn.closest('tr');
-  const nombre = tr.querySelector('.td-est-nombre')?.textContent?.trim() || '';
-
-  document.getElementById('inactivo-nombre').textContent = nombre;
-
+  _inactivoEstId=estId; _inactivoActivoActual=activoActual; _inactivoBtnRef=btn;
+  const nombre = document.querySelector(`[data-est-id="${estId}"] .td-est-nombre`)?.textContent?.trim()
+              || document.querySelector(`#card-est-${estId}`)?.querySelector('[style*="font-weight:700"]')?.textContent?.trim()
+              || '';
+  document.getElementById('inactivo-nombre').textContent=nombre;
   if (activoActual) {
-    // Marcar como inactivo
-    document.getElementById('inactivo-title').textContent = 'Marcar como inactivo';
-    document.getElementById('inactivo-razon').value = razonActual || '';
-    document.getElementById('inactivo-razon-wrap').style.display = '';
-    document.getElementById('reactivar-wrap').style.display = 'none';
-    document.getElementById('inactivo-ok').textContent = 'Marcar inactivo';
-    document.getElementById('inactivo-ok').className = 'btn btn-danger';
+    document.getElementById('inactivo-title').textContent='Marcar como inactivo';
+    document.getElementById('inactivo-razon').value=razonActual||'';
+    document.getElementById('inactivo-razon-wrap').style.display='';
+    document.getElementById('reactivar-wrap').style.display='none';
+    document.getElementById('inactivo-ok').textContent='Marcar inactivo';
+    document.getElementById('inactivo-ok').className='btn btn-danger';
   } else {
-    // Reactivar
-    document.getElementById('inactivo-title').textContent = 'Reactivar estudiante';
-    document.getElementById('inactivo-razon-wrap').style.display = 'none';
-    document.getElementById('reactivar-wrap').style.display = '';
-    document.getElementById('inactivo-ok').textContent = 'Reactivar';
-    document.getElementById('inactivo-ok').className = 'btn btn-success';
+    document.getElementById('inactivo-title').textContent='Reactivar estudiante';
+    document.getElementById('inactivo-razon-wrap').style.display='none';
+    document.getElementById('reactivar-wrap').style.display='';
+    document.getElementById('inactivo-ok').textContent='Reactivar';
+    document.getElementById('inactivo-ok').className='btn btn-success';
   }
-
-  document.getElementById('inactivo-ok').onclick = confirmarToggleInactivo;
+  document.getElementById('inactivo-ok').onclick=confirmarToggleInactivo;
   abrirModal('modal-inactivo');
 }
 
 function confirmarToggleInactivo() {
-  const nuevoActivo = !_inactivoActivoActual;
-  const razon = _inactivoActivoActual
-    ? (document.getElementById('inactivo-razon').value.trim())
-    : '';
-
+  const nuevoActivo=!_inactivoActivoActual;
+  const razon=_inactivoActivoActual?(document.getElementById('inactivo-razon').value.trim()):'';
   fetch(`/estudiante/${_inactivoEstId}/toggle-activo/`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
-    body:JSON.stringify({activo:nuevoActivo, razon})
+    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+    body:JSON.stringify({activo:nuevoActivo,razon})
   }).then(r=>r.json()).then(d=>{
     if(!d.ok){showToast('Error',false);return;}
     cerrarModal('modal-inactivo');
-    // Actualizar UI sin recargar
-    const tr = document.querySelector(`tr[data-est-id="${_inactivoEstId}"]`);
-    if (!tr) { location.reload(); return; }
-
+    // Actualizar escritorio
+    const tr=document.querySelector(`tr[data-est-id="${_inactivoEstId}"]`);
+    // Actualizar móvil
+    const card=document.getElementById('card-est-'+_inactivoEstId);
+    if(!tr&&!card){location.reload();return;}
     if (!d.activo) {
-      // Marcar como inactivo en el DOM
-      tr.classList.add('row-inactivo');
-      tr.dataset.activo = '0';
-      tr.querySelector('.td-est-nombre')?.classList.add('nombre-inactivo');
-      tr.querySelector('.avatar')?.classList.add('avatar-inactivo');
-
-      // Agregar badge inactivo si no existe
-      const nameWrap = tr.querySelector('.est-name-wrap');
-      if (nameWrap && !nameWrap.querySelector('.badge-inactivo')) {
-        const badge = document.createElement('span');
-        badge.className = 'badge-inactivo';
-        badge.title = d.razon || 'Sin razón registrada';
-        badge.textContent = 'Inactivo';
-        nameWrap.appendChild(badge);
+      tr?.classList.add('row-inactivo');
+      tr?.querySelector('.td-est-nombre')?.classList.add('nombre-inactivo');
+      tr?.querySelector('.avatar')?.classList.add('avatar-inactivo');
+      if(tr){
+        const nw=tr.querySelector('.est-name-wrap');
+        if(nw&&!nw.querySelector('.badge-inactivo')){const b=document.createElement('span');b.className='badge-inactivo';b.title=d.razon||'Sin razón';b.textContent='Inactivo';nw.appendChild(b);}
+        tr.querySelectorAll('.nota-input').forEach(i=>{i.disabled=true;});
+        tr.querySelectorAll('.td-nota').forEach(t=>{t.classList.add('td-bloqueada');});
       }
-
-      // Bloquear inputs
-      tr.querySelectorAll('.nota-input').forEach(inp=>{inp.disabled=true;inp.title='Estudiante inactivo';});
-      tr.querySelectorAll('.td-nota').forEach(td=>{td.classList.add('td-bloqueada');});
-
-      // Cambiar botón
-      _inactivoBtnRef.dataset.activo='0';
-      _inactivoBtnRef.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-      _inactivoBtnRef.title='Reactivar estudiante';
-      _inactivoBtnRef.setAttribute('onclick',`toggleInactivo(${_inactivoEstId},false,'${(d.razon||'').replace(/'/g,"\\'")}',this)`);
-
+      card?.classList.add('card-est-inactivo');
+      card?.querySelectorAll('.nota-input-movil').forEach(i=>{i.disabled=true;});
+      card?.querySelectorAll('.nota-movil-row').forEach(r=>{r.classList.add('td-bloqueada');});
       showToast('Estudiante marcado como inactivo');
     } else {
-      // Reactivar en el DOM
-      tr.classList.remove('row-inactivo');
-      tr.dataset.activo='1';
-      tr.querySelector('.td-est-nombre')?.classList.remove('nombre-inactivo');
-      tr.querySelector('.avatar')?.classList.remove('avatar-inactivo');
-      tr.querySelector('.badge-inactivo')?.remove();
-
-      tr.querySelectorAll('.nota-input').forEach(inp=>{inp.disabled=false;inp.title='';});
-      tr.querySelectorAll('.td-nota').forEach(td=>{td.classList.remove('td-bloqueada');});
-
-      _inactivoBtnRef.dataset.activo='1';
-      _inactivoBtnRef.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>';
-      _inactivoBtnRef.title='Marcar como inactivo';
-      _inactivoBtnRef.setAttribute('onclick',`toggleInactivo(${_inactivoEstId},true,'',this)`);
-
+      tr?.classList.remove('row-inactivo');
+      tr?.querySelector('.td-est-nombre')?.classList.remove('nombre-inactivo');
+      tr?.querySelector('.avatar')?.classList.remove('avatar-inactivo');
+      tr?.querySelector('.badge-inactivo')?.remove();
+      if(tr){
+        tr.querySelectorAll('.nota-input').forEach(i=>{i.disabled=false;});
+        tr.querySelectorAll('.td-nota').forEach(t=>{t.classList.remove('td-bloqueada');});
+      }
+      card?.classList.remove('card-est-inactivo');
+      card?.querySelectorAll('.nota-input-movil').forEach(i=>{i.disabled=false;});
+      card?.querySelectorAll('.nota-movil-row').forEach(r=>{r.classList.remove('td-bloqueada');});
       showToast('✓ Estudiante reactivado');
     }
     recalcTodas();
   }).catch(()=>showToast('Error de conexión',false));
 }
 
-// ── Buscador de estudiante ──
-let _filaResaltada = null;
+/* ════════ BUSCADOR ════════ */
+let _filaResaltada=null, _cardResaltada=null;
 
 function buscarEstudiante(q) {
-  const btnLimpiar = document.getElementById('btn-limpiar-busqueda');
+  // Quitar resaltados anteriores
+  if (_filaResaltada) { _filaResaltada.classList.remove('fila-resaltada'); _filaResaltada = null; }
+  if (_cardResaltada) { _cardResaltada.classList.remove('card-est-resaltada'); _cardResaltada = null; }
 
-  // Quitar resaltado anterior
-  if (_filaResaltada) {
-    _filaResaltada.classList.remove('fila-resaltada');
-    _filaResaltada = null;
-  }
+  // Cerrar TODAS las tarjetas móviles
+  document.querySelectorAll('.card-est-notas.open').forEach(notas => {
+    notas.classList.remove('open');
+    notas.closest('.card-est')?.querySelector('.card-est-toggle')?.classList.remove('expanded');
+  });
 
   q = q.trim().toLowerCase();
-  if (!q) { btnLimpiar.style.display = 'none'; return; }
-  btnLimpiar.style.display = '';
+  document.getElementById('btn-limpiar-busqueda').style.display = q ? '' : 'none';
+  if (!q) return;
 
-  // Buscar la primera fila que coincida
-  const filas = document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]');
-  let encontrada = null;
-  for (const tr of filas) {
-    const nombre = tr.querySelector('.td-est-nombre')?.textContent?.toLowerCase() || '';
-    if (nombre.includes(q)) { encontrada = tr; break; }
+  // Escritorio: resaltar primera fila que coincida
+  for (const tr of document.querySelectorAll('#tabla-notas tbody tr[data-row-idx]')) {
+    if ((tr.querySelector('.td-est-nombre')?.textContent?.toLowerCase() || '').includes(q)) {
+      tr.classList.add('fila-resaltada');
+      _filaResaltada = tr;
+      tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
   }
 
-  if (encontrada) {
-    encontrada.classList.add('fila-resaltada');
-    _filaResaltada = encontrada;
-    // Scroll suave hasta la fila
-    encontrada.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Enfocar el primer input de nota disponible de esa fila
-    // const primerInput = encontrada.querySelector('.nota-input:not([disabled])');
-    // if (primerInput) setTimeout(() => primerInput.focus(), 400);
+  // Móvil: abrir SOLO la primera tarjeta que coincida
+  for (const card of document.querySelectorAll('.card-est[data-nombre]')) {
+    if (card.dataset.nombre.includes(q)) {
+      card.classList.add('card-est-resaltada');
+      _cardResaltada = card;
+      const notas  = card.querySelector('.card-est-notas');
+      const toggle = card.querySelector('.card-est-toggle');
+      notas.classList.add('open');
+      toggle?.classList.add('expanded');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
   }
 }
 
 function limpiarBusqueda() {
-  document.getElementById('buscador-estudiante').value = '';
-  document.getElementById('btn-limpiar-busqueda').style.display = 'none';
-  if (_filaResaltada) {
-    _filaResaltada.classList.remove('fila-resaltada');
-    _filaResaltada = null;
-  }
+  document.getElementById('buscador-estudiante').value='';
+  document.getElementById('btn-limpiar-busqueda').style.display='none';
+  if(_filaResaltada){_filaResaltada.classList.remove('fila-resaltada');_filaResaltada=null;}
+  if(_cardResaltada){_cardResaltada.classList.remove('card-est-resaltada');_cardResaltada=null;}
 }
 </script>
 {% endblock %}
