@@ -412,8 +412,11 @@ tr.fila-resaltada .td-estudiante { background: #fef9c3 !important; }
 .card-est-notas.open { display: flex; }
 
 .nota-movil-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px; gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 72px;  /* texto ocupa lo que queda, input siempre 72px */
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--border);
   transition: background .15s;
 }
@@ -421,7 +424,11 @@ tr.fila-resaltada .td-estudiante { background: #fef9c3 !important; }
 
 .nota-movil-label {
   font-size: 13px; font-weight: 500; color: var(--text);
-  display: flex; align-items: center; gap: 6px; flex: 1;
+  display: flex; align-items: center; gap: 6px;
+  min-width: 0;           /* permite que el texto se recorte si es muy largo */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .nota-movil-pct {
   font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);
