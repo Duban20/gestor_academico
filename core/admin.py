@@ -6,7 +6,8 @@ from .models import Grado, Estudiante, Materia, CategoriaNota, Nota, Asistencia
 
 @admin.register(Grado)
 class GradoAdmin(admin.ModelAdmin):
-    list_display  = ("nombre", "descripcion", "total_estudiantes", "total_materias")
+    list_display  = ("nombre", "orden", "descripcion", "total_estudiantes", "total_materias")
+    list_editable = ("orden",)
     search_fields = ("nombre",)
 
     def total_estudiantes(self, obj):

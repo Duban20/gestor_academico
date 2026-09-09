@@ -7,21 +7,12 @@ urlpatterns = [
     path('', grados, name='grados'),
     path('grado/<int:id>/', detalle_grado, name='detalle_grado'),
 
-    # Notas
-    path('materia/<int:id>/', detalle_materia, name='detalle_materia'),
-    path('materia/<int:id>/agregar-categoria/', agregar_categoria, name='agregar_categoria'),
-    path('nota/<int:nota_id>/actualizar/', actualizar_nota, name='actualizar_nota'),
-    path('categoria/<int:cat_id>/actualizar/', actualizar_categoria, name='actualizar_categoria'),
-    path('categoria/<int:cat_id>/eliminar/', eliminar_categoria, name='eliminar_categoria'),
-
     # Foto estudiante
     path('estudiante/<int:est_id>/foto/', subir_foto_estudiante, name='subir_foto_estudiante'),
     path('estudiante/<int:est_id>/toggle-activo/', toggle_activo, name='toggle_activo'),
     path('estudiante/<int:est_id>/toggle-participativo/', toggle_participativo, name='toggle_participativo'),
 
     # Asistencia
-    path('materia/<int:materia_id>/exportar/', exportar_excel, name='exportar_excel'),
-
     path('materia/<int:materia_id>/asistencia/', asistencia_materia, name='asistencia_materia'),
     path('materia/<int:materia_id>/asistencia/api/', asistencia_api, name='asistencia_api'),
     path('materia/<int:materia_id>/asistencia/historial/', historial_asistencia, name='historial_asistencia'),

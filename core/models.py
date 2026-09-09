@@ -10,6 +10,10 @@ PERIODOS = [(1, "Periodo 1"), (2, "Periodo 2"), (3, "Periodo 3"), (4, "Periodo 4
 class Grado(models.Model):
     nombre      = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
+    orden       = models.IntegerField(default=0, help_text="Para ordenar los grados (0, 1, 2...)")
+
+    class Meta:
+        ordering = ["orden", "nombre"]
 
     def __str__(self):
         return self.nombre

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load extras %}
 {% block title %}Comportamiento P{{ periodo_actual }} – {{ materia.nombre }}{% endblock %}
-{% block sidebar_extra %}{% with modulo_activo="comportamiento" %}{% include "includes/sidebar_materia.html" %}{% endwith %}{% endblock %}
+{% block nav_extra %}{% with modulo_activo="comportamiento" %}{% include "includes/sidebar_materia.html" %}{% endwith %}{% endblock %}
 
 {% block content %}
 <div class="topbar">
@@ -9,7 +9,7 @@
     <div class="breadcrumb">
       <a href="{% url 'grados' %}">Inicio</a><span class="breadcrumb-sep">›</span>
       <a href="{% url 'detalle_grado' materia.grado.id %}">{{ materia.grado.nombre }}</a><span class="breadcrumb-sep">›</span>
-      <a href="{% url 'detalle_materia' materia.id %}?periodo={{ periodo_actual }}">{{ materia.nombre }}</a><span class="breadcrumb-sep">›</span>
+      <a href="{% url 'asistencia_materia' materia.id %}?periodo={{ periodo_actual }}">{{ materia.nombre }}</a><span class="breadcrumb-sep">›</span>
       <span>Comportamiento</span>
     </div>
     <h1 class="page-title">Comportamiento — {{ materia.nombre }}</h1>
@@ -32,30 +32,35 @@
 </div>
 
 <!-- Lista -->
-<div style="display:flex;flex-direction:column;gap:8px;" id="lista-reportes">
+<div class="rmc-grid" id="lista-reportes">
   {% for r in reportes %}
-  <div class="reporte-card" id="rep-{{ r.id }}">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <div class="reporte-est">
-        <div class="avatar" style="cursor:default;width:30px;height:30px;font-size:10px;">
+  <div class="rep-modern-card" id="rep-{{ r.id }}">
+    <div class="rmc-header">
+      <div class="rmc-user">
+        <div class="avatar" style="cursor:default;width:40px;height:40px;font-size:14px;">
           {% if r.estudiante.foto %}<img src="{{ r.estudiante.foto.url }}" alt="">{% else %}{{ r.estudiante.iniciales }}{% endif %}
         </div>
-        {{ r.estudiante.nombre }}
+        <div class="rmc-user-info">
+          <span class="rmc-name">{{ r.estudiante.nombre }}</span>
+          <span class="rmc-date">{{ r.fecha }}</span>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:7px;">
-        <span class="reporte-fecha">{{ r.fecha }}</span>
-        <button class="btn-icon" onclick="eliminarReporte({{ r.id }})" title="Eliminar" style="color:var(--nota-bajo-text);">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/></svg>
-        </button>
+      <div class="rmc-actions">
+        <button class="btn-delete-soft" onclick="eliminarReporte({{ r.id }})">Eliminar</button>
       </div>
     </div>
-    <div><span class="tipo-badge">{{ r.get_tipo_falta_display }}</span></div>
-    <div class="reporte-desc">{{ r.descripcion }}</div>
+    <div class="rmc-body">
+      <span class="rmc-badge">{{ r.get_tipo_falta_display }}</span>
+      <p class="rmc-desc">{{ r.descripcion }}</p>
+    </div>
   </div>
   {% empty %}
-  <div class="empty-state" id="empty-rep">
-    <div class="empty-state-icon">✅</div>
-    <p>Sin reportes de comportamiento en este periodo.</p>
+  <div class="empty-state-modern" id="empty-rep" style="grid-column:1/-1;">
+    <div class="esm-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div class="esm-title">Todo en orden</div>
+    <p class="esm-text">No hay reportes de comportamiento registrados en este periodo para esta materia.</p>
   </div>
   {% endfor %}
 </div>
@@ -197,18 +202,23 @@ function guardarReporte(){
 
     document.getElementById('empty-rep')?.remove();
     document.getElementById('lista-reportes').insertAdjacentHTML('afterbegin',`
-      <div class="reporte-card" id="rep-${d.id}">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <div class="reporte-est">${avatarHtml.replace('26px','30px').replace('9px','10px')} ${nombre}</div>
-          <div style="display:flex;align-items:center;gap:7px;">
-            <span class="reporte-fecha">${fecha}</span>
-            <button class="btn-icon" onclick="eliminarReporte(${d.id})" style="color:var(--nota-bajo-text);">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/></svg>
-            </button>
+      <div class="rep-modern-card" id="rep-${d.id}">
+        <div class="rmc-header">
+          <div class="rmc-user">
+            ${avatarHtml.replace('26px','40px').replace('9px','14px')}
+            <div class="rmc-user-info">
+              <span class="rmc-name">${nombre}</span>
+              <span class="rmc-date">${fecha}</span>
+            </div>
+          </div>
+          <div class="rmc-actions">
+            <button class="btn-delete-soft" onclick="eliminarReporte(${d.id})">Eliminar</button>
           </div>
         </div>
-        <div><span class="tipo-badge">${TIPOS_LABEL[tipo]}</span></div>
-        <div class="reporte-desc">${desc}</div>
+        <div class="rmc-body">
+          <span class="rmc-badge">${TIPOS_LABEL[tipo]}</span>
+          <p class="rmc-desc">${desc}</p>
+        </div>
       </div>`);
 
     const cnt = document.getElementById('contador-reportes');
@@ -232,4 +242,52 @@ function eliminarReporte(id){
     });
 }
 </script>
+
+<style>
+/* ── Nuevo Diseño Comportamiento Premium 2026 ── */
+.rmc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+.rep-modern-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.rep-modern-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--nota-bajo-text);
+  border-radius: 4px 0 0 4px;
+  opacity: 0.6;
+}
+.rep-modern-card:hover { transform: translateY(-3px); box-shadow: 0 16px 50px rgba(0,0,0,0.06); }
+.rmc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.rmc-user { display: flex; align-items: center; gap: 14px; }
+.rmc-user-info { display: flex; flex-direction: column; gap: 2px; }
+.rmc-name { font-weight: 700; font-size: 15px; color: var(--text); letter-spacing: -0.2px; }
+.rmc-date { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.rmc-body { display: flex; flex-direction: column; gap: 12px; }
+.rmc-badge { align-self: flex-start; background: #fff1f2; color: #be123c; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid #ffe4e6; }
+.rmc-desc { font-size: 14px; color: #4b5563; line-height: 1.6; }
+.btn-delete-soft { color: #9ca3af; background: transparent; border: none; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: all 0.2s; }
+.btn-delete-soft:hover { color: #dc2626; background: #fee2e2; }
+
+.empty-state-modern {
+  text-align: center; padding: 60px 20px;
+  background: rgba(255,255,255,0.4); border: 1px dashed var(--border); border-radius: 24px;
+}
+.esm-icon {
+  width: 64px; height: 64px; border-radius: 20px; background: #f0fdf4; color: #15803d;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(21,128,61,0.15);
+}
+.esm-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.esm-text { font-size: 14px; color: var(--text-muted); }
+</style>
 {% endblock %}

@@ -21,3 +21,12 @@ def badge_estado(e):
         "pendiente":  "badge-pendiente",
         "entregada":  "badge-entregada",
     }.get(e, "")
+
+@register.simple_tag
+def num_actividades_pendientes(materia, periodo):
+    from core.models import ActividadPendiente
+    return ActividadPendiente.objects.filter(
+        materia=materia, 
+        periodo=periodo, 
+        estado="pendiente"
+    ).count()
